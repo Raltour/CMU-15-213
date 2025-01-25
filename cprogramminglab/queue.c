@@ -20,6 +20,9 @@ void queue_free(queue_t *q) {
         list_ele_t *curr = q->head;
         while (curr->next != NULL) {
             list_ele_t *p = curr->next;
+            if (curr->value != NULL) {
+                free(curr->value);  // 释放节点的value
+            }
             free(curr);
             curr = p;
         }
@@ -45,7 +48,7 @@ void queue_insert_tail(queue_t *q, char *val) {
     new->value = val;
     new->next = NULL;
     if (q->head == NULL) {
-        new->next = q->head;
+        q->head = new;
     } else {
         list_ele_t *curr = q->head;
         while (curr->next != NULL) {
@@ -60,16 +63,15 @@ char *queue_remove_head(queue_t *q) {
     if (q->head == NULL) {
         return NULL;
     } else {
-        if (q->head->value== NULL) {
+        list_ele_t *temp = q->head;
+        q->head = q->head->next;
+        q->size--;
+        if (temp->value == NULL) {
+            free(temp);
             return NULL;
         } else {
-            char *val = q->head->value;
-            if (q->head->next == NULL) {
-                q->head = NULL;
-            } else {
-                q->head = q->head->next;
-            }
-            return val;
+            free(temp);
+            return temp->value;
         }
     }
 }
@@ -99,7 +101,7 @@ list_ele_t *queue_gettail(queue_t* q) {
 
 void queue_reverse(queue_t *q) {
     list_ele_t *tail = queue_gettail(q);
-    for (int i = 0; i < q->size; i++) {
+    for (int i = 0; i < q->size - 1; i++) {
         list_ele_exchange(q->head, tail);
     }
 }
