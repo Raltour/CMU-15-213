@@ -7,10 +7,11 @@ typedef struct list_ele {
 /* Queue structure */
 typedef struct {
     list_ele_t *head; /* First element in the queue */
+    int size;
 } queue_t;
 
 // Create a new, empty queue.
-queue_t *queue_new();
+queue_t *queue_new(void);
 //Free all storage used by a queue.
 void queue_free(queue_t *queue);
 //Attempt to insert a new element at the head of the queue (LIFO discipline).
