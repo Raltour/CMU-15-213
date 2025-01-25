@@ -1,5 +1,6 @@
 #include "queue.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 
 queue_t *queue_new() {
@@ -11,7 +12,7 @@ queue_t *queue_new() {
     head->value = NULL;
     head->next = NULL;
     q->head = head;
-    q->size = 0;
+    q->size = 1;
     return q;
 }
 
@@ -104,4 +105,26 @@ void queue_reverse(queue_t *q) {
     for (int i = 0; i < q->size - 1; i++) {
         list_ele_exchange(q->head, tail);
     }
+}
+
+void queue_print(queue_t *q) {
+    if (q->head == NULL) {
+        printf("Queue is empty\n");
+    } else {
+        list_ele_t *curr = q->head;
+        while (curr->next != NULL) {
+            if (curr->value != NULL) {
+                printf("%s\n", curr->value);
+            } else {
+                printf("NULL in this palce\n");
+            }
+            curr = curr->next;
+        }
+        if (curr->value != NULL) {
+            printf("%s\n", curr->value);
+        } else {
+            printf("NULL in this palce\n");
+        }
+    }
+    printf("\n");
 }

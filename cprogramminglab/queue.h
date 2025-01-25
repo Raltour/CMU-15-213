@@ -29,3 +29,5 @@ int queue_size(queue_t *queue);
 * Instead, it should rearrange the existing elements.
  */
 void queue_reverse(queue_t *queue);
+//show all values in the queue
+void queue_print(queue_t *queue);
