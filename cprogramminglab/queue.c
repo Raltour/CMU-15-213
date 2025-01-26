@@ -81,11 +81,11 @@ int queue_size(queue_t *q) {
     return q->size;
 }
 
-void list_ele_exchange(list_ele_t *head, list_ele_t *tail) {
-    list_ele_t *head_next = head->next;
-    head->next = head_next->next;
-    head_next->next = tail->next;
-    tail->next = head_next;
+void list_ele_exchange(queue_t *q, list_ele_t *tail) {
+    list_ele_t *temp = q->head;
+    q->head = temp->next;
+    temp->next = tail->next;
+    tail->next = temp;
 }
 
 list_ele_t *queue_gettail(queue_t* q) {
@@ -103,7 +103,7 @@ list_ele_t *queue_gettail(queue_t* q) {
 void queue_reverse(queue_t *q) {
     list_ele_t *tail = queue_gettail(q);
     for (int i = 0; i < q->size - 1; i++) {
-        list_ele_exchange(q->head, tail);
+        list_ele_exchange(q, tail);
     }
 }
 
@@ -123,7 +123,7 @@ void queue_print(queue_t *q) {
         if (curr->value != NULL) {
             printf("%s\n", curr->value);
         } else {
-            printf("NULL in this palce\n");
+            printf("NULL in this palce.\n");
         }
     }
     printf("\n");
