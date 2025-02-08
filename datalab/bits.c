@@ -152,8 +152,9 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-
-  return 2;
+    int x = 0;
+    x >>= 1;
+    return x;
 
 }
 //2
@@ -165,7 +166,8 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-  return 2;
+    int y = (x + 1) - (~x);
+    return !y;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -176,7 +178,17 @@ int isTmax(int x) {
  *   Rating: 2
  */
 int allOddBits(int x) {
-  return 2;
+    int y = x<<16;
+    x &= y;
+    y = x << 8;
+    x &= y;
+    y = x << 4;
+    x &= y;
+    y = x << 2;
+    x &= y;
+
+    int z = !((y>>1) + 1);
+    return z;
 }
 /* 
  * negate - return -x 
@@ -186,7 +198,7 @@ int allOddBits(int x) {
  *   Rating: 2
  */
 int negate(int x) {
-  return 2;
+  return (~x) + 1;
 }
 //3
 /* 
@@ -199,7 +211,11 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  return 2;
+  int y = x - 0x30;
+  y =  (y>>31) + 1;
+  int z = 0x39 - x;
+  z = (z>>1) + 1;
+  return y & z;
 }
 /* 
  * conditional - same as x ? y : z 
@@ -209,7 +225,10 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  return 2;
+  int b = (!x) - 1;
+  int c = (!(!x)) - 1;
+
+ return y & b + z & c;
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -219,7 +238,10 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  return 2;
+  int d = y - x;
+  d >>= 31;
+  d++;
+  return d;
 }
 //4
 /* 
@@ -231,7 +253,21 @@ int isLessOrEqual(int x, int y) {
  *   Rating: 4 
  */
 int logicalNeg(int x) {
-  return 2;
+  int y = x;
+  x <<= 16;
+  y |= x;
+  x = y<<8;
+  y |= x;
+  x = y<<4;
+  y |= x;
+  x = y<<2;
+  y |= x;
+  x = y<<1;
+  y |= x;
+  y >>= 31;
+  y++;
+  return y;
+  //诡异，回头看看还能不能优化一些
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
@@ -246,6 +282,9 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
+ int first = x >> 31;
+
+
   return 0;
 }
 //float
