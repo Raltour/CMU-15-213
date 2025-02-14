@@ -348,7 +348,34 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-  return 2;
+    int s = uf >> 31;//记录符号
+    int exp = uf >> 23 & 0xFF;//记录阶数
+    int frac = uf & (1 << 22);//记录frac
+
+    int b = (~0xFF) + 1;
+    if (!((exp) + b)) {
+        return (0x01 << 31);
+    }
+
+    int Bias = 0x3F;
+    int E = exp + (~Bias) + 1;
+    if ((~(E >> 31)) + 1) {//等同于E < 0
+        return 0;
+    }
+
+    int num = frac + (1 << 23);
+    int c = E + (~0x17) + 1 - 23;
+    if ((~(c >> 31)) + 1) {//等价于E < 23
+        num >>= (23 - E);
+    }
+    if shift = E + (~0x17) + 1;//要左移的位数
+    num <<= shift;
+
+    if (s) {
+        num = (~num) + 1;
+    }
+
+    return num;
 }
 /* 
  * floatPower2 - Return bit-level equivalent of the expression 2.0^x
