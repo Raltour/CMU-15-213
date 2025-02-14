@@ -166,7 +166,7 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-    int y = (x + 1) - (~x);
+    int y = (x + 1) ^ (~x);
     return !y;
 }
 /* 
@@ -213,7 +213,8 @@ int negate(int x) {
 int isAsciiDigit(int x) {
   int y = x - 0x30;
   y =  (y>>31) + 1;
-  int z = 0x39 - x;
+  int nx = (~x) + 1;
+  int z = 0x39 + nx;
   z = (z>>1) + 1;
   return y & z;
 }
@@ -225,8 +226,9 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-  int b = (!x) - 1;
-  int c = (!(!x)) - 1;
+    int a = 0x01 << 31;
+    int b = (!x) + a;
+    int c = (!(!x)) + a;
 
  return y & b + z & c;
 }
@@ -238,7 +240,7 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  int d = y - x;
+  int d = y + (~x) + 1;
   d >>= 31;
   d++;
   return d;
