@@ -267,25 +267,50 @@ int logicalNeg(int x) {
   y >>= 31;
   y++;
   return y;
-  //诡异，回头看看还能不能优化一些
 }
 /* howManyBits - return the minimum number of bits required to represent x in
  *             two's complement
- *  Examples: howManyBits(12) = 5
- *            howManyBits(298) = 10
- *            howManyBits(-5) = 4
- *            howManyBits(0)  = 1
- *            howManyBits(-1) = 1
+ *  Examples: howManyBits(12) = 5      01100
+ *            howManyBits(298) = 10    0100101010
+ *            howManyBits(-5) = 4      1011
+ *            howManyBits(0)  = 1      0
+ *            howManyBits(-1) = 1      1
  *            howManyBits(0x80000000) = 32
  *  Legal ops: ! ~ & ^ | + << >>
  *  Max ops: 90
  *  Rating: 4
  */
 int howManyBits(int x) {
- int first = x >> 31;
+ int first = !((x >> 31) + 1);
+ int cnt = 0;
+ int mask = 0xFF;
+ int c1 = (x >> 24) & mask;
+ int c2 = x >> 16 & mask;
+ int c3 = x >> 8 & mask;
+ int c4 = x & mask;
 
+ int a1 = first << 3;
+ int a2 = a1 ^ 0x01;
+ int a3 = a1 ^ 0x03;
+ int a4 = a1 ^ 0x07;
 
-  return 0;
+ int next = 0;//0表示可以继续
+
+ next = c1 ^ a1;
+ cnt = cnt + (~next) & (0x04 & ~next + 0x03 & (!(c1 ^ a2)) + 0x02 & (!(c1 ^ a3)) + 0x01 & (!(c1 ^ a4)));
+
+ next = (next >> 31) & (!(c2 ^ a1));
+ cnt = cnt + (next >> 31) & (0x04 & next + 0x03 & (!(c2 ^ a2)) + 0x02 & (!(c2 ^ a3)) + 0x01 & (!(c2 ^ a4)));
+
+ next = (next >> 31) & (!(c3 ^ a1));
+ cnt = cnt + (next >> 31) & (0x04 & next + 0x03 & (!(c3 ^ a2)) + 0x02 & (!(c3 ^ a3)) + 0x01 & (!(c3 ^ a4)));
+
+ next = (next >> 31) & (!(c4 ^ a1));
+ cnt = cnt + (next >> 31) & (0x04 & next + 0x03 & (!(c4 ^ a2)) + 0x02 & (!(c4 ^ a3)) + 0x01 & (!(c4 ^ a4)));
+
+ int result = 0x20 + (~cnt + 1) + 1;
+
+  return result;
 }
 //float
 /* 
