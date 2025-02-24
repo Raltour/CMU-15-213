@@ -283,36 +283,68 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
- int first = !((x >> 31) + 1);
- int cnt = 0;
- int mask = 0xFF;
- int c1 = (x >> 24) & mask;
- int c2 = x >> 16 & mask;
- int c3 = x >> 8 & mask;
- int c4 = x & mask;
+    int result = 0;
 
- int a1 = first << 3;
- int a2 = a1 ^ 0x01;
- int a3 = a1 ^ 0x03;
- int a4 = a1 ^ 0x07;
 
- int next = 0;//0表示可以继续
 
- next = c1 ^ a1;
- cnt = cnt + (~next) & (0x04 & ~next + 0x03 & (!(c1 ^ a2)) + 0x02 & (!(c1 ^ a3)) + 0x01 & (!(c1 ^ a4)));
+    int y = (x << 16) >> 16;
+    int z = !!(y ^ x);//z为0说明左侧无所谓，看右侧的值；1则说明右侧无所谓，加个16，看左侧的值
+    result += (z << 31) & 0x10;
 
- next = (next >> 31) & (!(c2 ^ a1));
- cnt = cnt + (next >> 31) & (0x04 & next + 0x03 & (!(c2 ^ a2)) + 0x02 & (!(c2 ^ a3)) + 0x01 & (!(c2 ^ a4)));
+    //把0变成16，1变成0
+    int a = (!z) << 4;
+    x <<= a;
 
- next = (next >> 31) & (!(c3 ^ a1));
- cnt = cnt + (next >> 31) & (0x04 & next + 0x03 & (!(c3 ^ a2)) + 0x02 & (!(c3 ^ a3)) + 0x01 & (!(c3 ^ a4)));
 
- next = (next >> 31) & (!(c4 ^ a1));
- cnt = cnt + (next >> 31) & (0x04 & next + 0x03 & (!(c4 ^ a2)) + 0x02 & (!(c4 ^ a3)) + 0x01 & (!(c4 ^ a4)));
 
- int result = 0x20 + (~cnt + 1) + 1;
 
-  return result;
+    //result +=左侧的位数
+    y = (x << 8) >> 8;
+    z = !!(y ^ x);
+    result += (z << 31) & 0x08;
+
+    a = (!z) << 3;
+    x <<= a;
+
+
+
+
+    //还剩8个待检查的位
+    y = (x << 4) >> 4;
+    z = !!(y ^ x);
+    result += (z << 31) & 0x04;
+
+    a = (!z) << 2;
+    x <<= a;
+
+
+
+
+    //还剩4个待检查的位
+    y = (x << 2) >> 2;
+    z = !!(y ^ x);
+    result += (z << 31) & 0x02;
+
+    a = (!z) << 1;
+    x <<= a;
+
+
+
+    //还剩2个待检查的位
+    y = (x << 1) >> 1;
+    z = !!(y ^ x);
+    result += (z << 31) & 0x01;
+
+    a = (!z) << 0;
+    x <<= a;
+
+
+    //还剩1个待检查的位
+    result++;
+
+
+
+    return result;
 }
 //float
 /* 
@@ -368,7 +400,7 @@ int floatFloat2Int(unsigned uf) {
     if ((~(c >> 31)) + 1) {//等价于E < 23
         num >>= (23 - E);
     }
-    if shift = E + (~0x17) + 1;//要左移的位数
+    int shift = E + (~0x17) + 1;//要左移的位数
     num <<= shift;
 
     if (s) {
@@ -391,5 +423,13 @@ int floatFloat2Int(unsigned uf) {
  *   Rating: 4
  */
 unsigned floatPower2(int x) {
+/* Bias = 127
+* 最大能表示：2 ^ 128
+* 最小能表示 2 ^ -126
+*
+ *
+ * */
+
+
     return 2;
 }
