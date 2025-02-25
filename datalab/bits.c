@@ -284,20 +284,18 @@ int logicalNeg(int x) {
  */
 int howManyBits(int x) {
     int result = 0;
+    int y, z, a;
 
 
-
-    int y = (x << 16) >> 16;
-    int z = !!(y ^ x);//z为0说明左侧无所谓，看右侧的值；1则说明右侧无所谓，加个16，看左侧的值
+    y = (x << 16) >> 16;
+    z = !!(y ^ x);//z为0说明左侧无所谓，看右侧的值；1则说明右侧无所谓，加个16，看左侧的值
     result += (z << 31) & 0x10;
 
     //把0变成16，1变成0
-    int a = (!z) << 4;
+    a = (!z) << 4;
     x <<= a;
 
-
-
-
+    
     //result +=左侧的位数
     y = (x << 8) >> 8;
     z = !!(y ^ x);
@@ -305,8 +303,6 @@ int howManyBits(int x) {
 
     a = (!z) << 3;
     x <<= a;
-
-
 
 
     //还剩8个待检查的位
@@ -318,8 +314,6 @@ int howManyBits(int x) {
     x <<= a;
 
 
-
-
     //还剩4个待检查的位
     y = (x << 2) >> 2;
     z = !!(y ^ x);
@@ -327,7 +321,6 @@ int howManyBits(int x) {
 
     a = (!z) << 1;
     x <<= a;
-
 
 
     //还剩2个待检查的位
@@ -341,7 +334,6 @@ int howManyBits(int x) {
 
     //还剩1个待检查的位
     result++;
-
 
 
     return result;
@@ -424,12 +416,23 @@ int floatFloat2Int(unsigned uf) {
  */
 unsigned floatPower2(int x) {
 /* Bias = 127
-* 最大能表示：2 ^ 128
-* 最小能表示 2 ^ -126
-*
+ * exp 1 ~ 255
+ * E -126 ~ 128
  *
+ * x > 0 : 最大为128， 表示 2 ^ 128
+ * x > 128 : ifinity  0 1111111 0000000 = 0xFF << 23
+ * x = 0: 1
+ * x < 0: 最小为 2 ^ (-126) 0 0000000001 000000
+ * x < -126: 0
  * */
 
 
-    return 2;
+    if ((~((128 - x) >> 31)) + 1) { // x > 128
+        return 0xFF << 23;
+    }
+    if ((~((x + 126) >> 31)) + 1) { // x < -126
+        return 0;
+    }
+
+    return (x + 0x7F) << 23;
 }
