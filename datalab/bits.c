@@ -375,30 +375,29 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-    int s, exp, frac, b, Bias, E, num, c, shift;
+    int s, exp, frac, b, E, num, shift;
 
     s = uf >> 31;//记录符号
     exp = uf >> 23 & 0xFF;//记录阶数
     frac = uf & (1 << 22);//记录frac
 
-    b = (~0xFF) + 1;
-    if (!((exp) + b)) {
-        return (0x01 << 31);
-    }
-
-    Bias = 0x3F;
-    E = exp + (~Bias) + 1;
-    if ((~(E >> 31)) + 1) {//等同于E < 0
+    //exp < 127 : return 0;
+    E = exp - 0x7F;
+    if ((~(E >> 31)) + 1) {
         return 0;
     }
 
-    num = frac + (1 << 23);
-    c = E + (~0x17) + 1 - 23;
-    if ((~(c >> 31)) + 1) {//等价于E < 23
-        num >>= (23 - E);
+    num = frac + (0x01 << 23);
+
+    //left shift E - 23;
+    shift = E - 23;
+    b = ~(shift >> 31);
+    if (b + 1) {
+        num >> ((~shift) + 1);
     }
-    shift = E + (~0x17) + 1;//要左移的位数
-    num <<= shift;
+    if (b) {
+        num << shift;
+    }
 
     if (s) {
         num = (~num) + 1;
