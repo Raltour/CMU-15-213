@@ -137,13 +137,13 @@ NOTES:
 //1
 /* 
  * bitXor - x^y using only ~ and & 
- *   Example: bitXor(4, 5) = 1
+ *   Example: bitXor(4, 5) = 1    100 ^ 101
  *   Legal ops: ~ &
  *   Max ops: 14
  *   Rating: 1
  */
 int bitXor(int x, int y) {
-  return (~x & y) + (~y & x);
+  return ~((~(~x & y)) & (~(~y & x)));
 }
 /* 
  * tmin - return minimum two's complement integer 
@@ -186,9 +186,9 @@ int allOddBits(int x) {
     x &= y;
     y = x << 2;
     x &= y;
+    y >>= 1;
 
-    int z = !((y>>1) + 1);
-    return z;
+    return !(y + 1);
 }
 /* 
  * negate - return -x 
@@ -211,12 +211,14 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-  int y = x - 0x30;
-  y =  (y>>31) + 1;
-  int nx = (~x) + 1;
-  int z = 0x39 + nx;
-  z = (z>>1) + 1;
-  return y & z;
+    int y, nx, z;
+    y = x + ~0x30 + 1;
+    y =  (y>>31) + 1;
+    nx = ~x + 1;
+    
+    z = 0x39 + nx;
+    z = (z>>1) + 1;
+    return y & z;
 }
 /* 
  * conditional - same as x ? y : z 
@@ -230,7 +232,7 @@ int conditional(int x, int y, int z) {
     int b = (!x) + a;
     int c = (!(!x)) + a;
 
- return y & b + z & c;
+ return (y & b) + (z & c);
 }
 /* 
  * isLessOrEqual - if x <= y  then return 1, else return 0 
@@ -242,7 +244,7 @@ int conditional(int x, int y, int z) {
 int isLessOrEqual(int x, int y) {
   int d = y + (~x) + 1;
   d >>= 31;
-  d++;
+  d = d + 1;
   return d;
 }
 //4
@@ -267,7 +269,7 @@ int logicalNeg(int x) {
   x = y<<1;
   y |= x;
   y >>= 31;
-  y++;
+  y = y + 1;
   return y;
 }
 /* howManyBits - return the minimum number of bits required to represent x in
@@ -333,7 +335,7 @@ int howManyBits(int x) {
 
 
     //还剩1个待检查的位
-    result++;
+    result = result + 1;
 
 
     return result;
@@ -351,13 +353,14 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-  int a = uf >> 23;
-  int b = (~0xFF) + 1;
-  if (!((a & 0xFF) + b) && !(uf << 9)) {
-    return uf;
-  }
-  int c = 0x01 << 23;
-  return uf + c;
+    int a, b, c;
+    a = uf >> 23;
+    b = (~0xFF) + 1;
+    if (!((a & 0xFF) + b) && !(uf << 9)) {
+        return uf;
+    }
+    c = 0x01 << 23;
+    return uf + c;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
@@ -372,27 +375,29 @@ unsigned floatScale2(unsigned uf) {
  *   Rating: 4
  */
 int floatFloat2Int(unsigned uf) {
-    int s = uf >> 31;//记录符号
-    int exp = uf >> 23 & 0xFF;//记录阶数
-    int frac = uf & (1 << 22);//记录frac
+    int s, exp, frac, b, Bias, E, num, c, shift;
 
-    int b = (~0xFF) + 1;
+    s = uf >> 31;//记录符号
+    exp = uf >> 23 & 0xFF;//记录阶数
+    frac = uf & (1 << 22);//记录frac
+
+    b = (~0xFF) + 1;
     if (!((exp) + b)) {
         return (0x01 << 31);
     }
 
-    int Bias = 0x3F;
-    int E = exp + (~Bias) + 1;
+    Bias = 0x3F;
+    E = exp + (~Bias) + 1;
     if ((~(E >> 31)) + 1) {//等同于E < 0
         return 0;
     }
 
-    int num = frac + (1 << 23);
-    int c = E + (~0x17) + 1 - 23;
+    num = frac + (1 << 23);
+    c = E + (~0x17) + 1 - 23;
     if ((~(c >> 31)) + 1) {//等价于E < 23
         num >>= (23 - E);
     }
-    int shift = E + (~0x17) + 1;//要左移的位数
+    shift = E + (~0x17) + 1;//要左移的位数
     num <<= shift;
 
     if (s) {
