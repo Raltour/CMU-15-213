@@ -152,10 +152,7 @@ int bitXor(int x, int y) {
  *   Rating: 1
  */
 int tmin(void) {
-    int x = 0;
-    x >>= 1;
-    return x;
-
+    return 1 << 31;
 }
 //2
 /*
@@ -166,8 +163,10 @@ int tmin(void) {
  *   Rating: 1
  */
 int isTmax(int x) {
-    int y = (x + 1) ^ (~x);
-    return !y;
+    int y, z;
+    y = (~((x + 1) >> 31)) + 1;
+    z = x >> 31 + 1;
+    return y & z;
 }
 /* 
  * allOddBits - return 1 if all odd-numbered bits in word set to 1
@@ -393,10 +392,10 @@ int floatFloat2Int(unsigned uf) {
     shift = E - 23;
     b = ~(shift >> 31);
     if (b + 1) {
-        num >> ((~shift) + 1);
+        num >>= ((~shift) + 1);
     }
     if (b) {
-        num << shift;
+        num <<= shift;
     }
 
     if (s) {
