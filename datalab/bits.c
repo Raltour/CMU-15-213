@@ -210,10 +210,10 @@ int negate(int x) {
  */
 int isAsciiDigit(int x) {
     int y, nx, z;
-    y = x + ~0x30 + 1;
-    y =  (y>>31) + 1;
+    y = x + (~0x30) + 1;
+    y = (y>>31) + 1;
+
     nx = ~x + 1;
-    
     z = 0x39 + nx;
     z = (z>>1) + 1;
     return y & z;
@@ -226,7 +226,7 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-    int a = 0x01 << 31;
+    int a = 0x1 >> 31;
     int b = (!x) + a;
     int c = (!(!x)) + a;
 
@@ -240,10 +240,15 @@ int conditional(int x, int y, int z) {
  *   Rating: 3
  */
 int isLessOrEqual(int x, int y) {
-  int d = y + (~x) + 1;
-  d >>= 31;
-  d = d + 1;
-  return d;
+    int d;
+    int a = x ^ y;
+    a  = (a >> 31) + 1;//same sign: 1 diff sign: 0
+
+    d = y + (~x) + 1;
+
+    d = (d >> 31) + 1;
+
+    return (d & a) | ((!a) & ((y >> 31) + 1));
 }
 //4
 /* 
@@ -283,13 +288,14 @@ int logicalNeg(int x) {
  *  Rating: 4
  */
 int howManyBits(int x) {
-    int result = 0;
+    int result ;
     int y, z, a;
-
+    int negone = (~0x01) + 1;
+    result = 1;
 
     y = (x << 16) >> 16;
-    z = !!(y ^ x);//z为0说明左侧无所谓，看右侧的值；1则说明右侧无所谓，加个16，看左侧的值
-    result += (z << 31) & 0x10;
+    z = (!(y ^ x)) + negone;//z为0说明左侧无所谓，看右侧的值；-1则说明右侧无所谓，加个16，看左侧的值
+    result = result + (z & 0x10);
 
     //把0变成16，1变成0
     a = (!z) << 4;
@@ -298,8 +304,8 @@ int howManyBits(int x) {
     
     //result +=左侧的位数
     y = (x << 8) >> 8;
-    z = !!(y ^ x);
-    result += (z << 31) & 0x08;
+    z = (!(y ^ x)) + negone;
+    result += (z & 0x08);
 
     a = (!z) << 3;
     x <<= a;
@@ -307,8 +313,8 @@ int howManyBits(int x) {
 
     //还剩8个待检查的位
     y = (x << 4) >> 4;
-    z = !!(y ^ x);
-    result += (z << 31) & 0x04;
+    z = (!(y ^ x)) + negone;
+    result += (z & 0x04);
 
     a = (!z) << 2;
     x <<= a;
@@ -316,8 +322,8 @@ int howManyBits(int x) {
 
     //还剩4个待检查的位
     y = (x << 2) >> 2;
-    z = !!(y ^ x);
-    result += (z << 31) & 0x02;
+    z = (!(y ^ x)) + negone;
+    result += (z & 0x02);
 
     a = (!z) << 1;
     x <<= a;
@@ -325,15 +331,14 @@ int howManyBits(int x) {
 
     //还剩2个待检查的位
     y = (x << 1) >> 1;
-    z = !!(y ^ x);
-    result += (z << 31) & 0x01;
+    z = (!(y ^ x)) + negone;
+    result += (z & 0x01);
 
     a = (!z) << 0;
     x <<= a;
 
 
     //还剩1个待检查的位
-    result = result + 1;
 
 
     return result;
