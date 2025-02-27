@@ -209,14 +209,16 @@ int negate(int x) {
  *   Rating: 3
  */
 int isAsciiDigit(int x) {
-    int y, nx, z;
+    int y, nx, z, big;
+    big = !(x >> 7);
+
     y = x + (~0x30) + 1;
     y = (y>>31) + 1;
 
     nx = ~x + 1;
     z = 0x39 + nx;
-    z = (z>>1) + 1;
-    return y & z;
+    z = (z>>31) + 1;
+    return y & z & big;
 }
 /* 
  * conditional - same as x ? y : z 
@@ -226,7 +228,7 @@ int isAsciiDigit(int x) {
  *   Rating: 3
  */
 int conditional(int x, int y, int z) {
-    int a = 0x1 >> 31;
+    int a = (~1) + 1;
     int b = (!x) + a;
     int c = (!(!x)) + a;
 
