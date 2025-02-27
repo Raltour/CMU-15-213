@@ -356,14 +356,21 @@ int howManyBits(int x) {
  *   Rating: 4
  */
 unsigned floatScale2(unsigned uf) {
-    int a, b, c;
-    a = uf >> 23;
-    b = (~0xFF) + 1;
-    if (!((a & 0xFF) + b) && !(uf << 9)) {
+    int exp, frac, s;
+    int negone = (~1) + 1;
+    s = uf & (1 << 31);
+    exp = (uf >> 23) & (~(negone << 8));
+    frac = uf & (~(negone << 23));
+    if ((!frac) && (!exp)) {
         return uf;
     }
-    c = 0x01 << 23;
-    return uf + c;
+    if (exp ^ 0xFF) {
+        if (exp) {
+            return uf + (1 << 23);
+        }
+        return s + (frac << 1);
+    }
+    return uf;
 }
 /* 
  * floatFloat2Int - Return bit-level equivalent of expression (int) f
