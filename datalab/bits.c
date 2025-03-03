@@ -394,7 +394,7 @@ int floatFloat2Int(unsigned uf) {
 
     s = uf >> 31;//记录符号
     exp = uf >> 23 & 0xFF;//记录阶数
-    frac = uf & (1 << 22);//记录frac
+    frac = uf & (~((~0) << 23));//记录frac
 
     //exp < 127 : return 0;
     E = exp - 0x7F;
@@ -403,6 +403,11 @@ int floatFloat2Int(unsigned uf) {
     }
 
     num = frac + (0x01 << 23);
+
+    //如果E大于31,直接返回0x80000000
+    if (((E - 0x20) >> 31) + 1) {
+        return 1 << 31;
+    }
 
     //left shift E - 23;
     shift = E - 23;
