@@ -1,7 +1,7 @@
 #include "cachelab.h"
 #include <stdlib.h>
-#include <unistd.h>
-#include <bits/getopt_core.h>
+// #include <unistd.h>
+// #include <bits/getopt_core.h>
 #include <stdbool.h>
 
 
@@ -70,21 +70,23 @@ void deletecache(Cache* cache) {
     free(cache->sets);
 }
 
+//查找set中是否有某一个tag,若有则返回这个line
 Line* find_line(Set* set, int lines_num, unsigned int tag) {
     Line* p = set->first;
     while (p != set->last) {
-        if (p->tag == tag) {
+        if (p->vilid_bit && p->tag == tag) {
             return p;
         }
         p = p->next;
     }
-    if (p->tag == tag) {
+    if (p->vilid_bit && p->tag == tag) {
         return p;
     }
     return NULL;
 }
 
-void move_to_last(Set* set, Line* line, unsigned int tag) {
+//将链表中的一项移动到末端
+void move_to_last(Set* set, Line* line) {
     if (line == set->last) {
         return ;
     } else if (line == set->first) {
@@ -98,15 +100,16 @@ void move_to_last(Set* set, Line* line, unsigned int tag) {
         line->prev->next = line->next;
         line->next = NULL;
     }
-
 }
 
+//确定某一块不在内存当中时，调用此函数，将这一块加载进来，覆盖掉链表的头部，即使用时间最久远的一项
 void cache_load(Cache* cache, int tag, int set_index, int offset) {
     set_index %= cache->sets_num;
     Set* aimSet = &cache->sets[set_index];
-    if (!find_line(aimSet, cache->lines_num, tag)) {
-        aimSet->first.tag = tag;
-    }
+
+    aimSet->first->tag = tag;
+    aimSet->first->vilid_bit = true;
+    move_to_last(aimSet, aimSet->first);
 }
 
 
@@ -114,19 +117,19 @@ int main(int argc, int* argv)
 {
     int opt, s, E, b;
 
-    while ((opt = getopt(argc, argv, "s:E:b:")) != -1) {
-        switch(opt) {
-            case 's' :
-                s = atoi(optarg);
-                break;
-            case 'E' :
-                E = atoi(optarg);
-                break;
-            case 'b' :
-                b = atoi(optarg);
-                break;
-        }
-    }
+    // while ((opt = getopt(argc, argv, "s:E:b:")) != -1) {
+    //     switch(opt) {
+    //         case 's' :
+    //             s = atoi(optarg);
+    //             break;
+    //         case 'E' :
+    //             E = atoi(optarg);
+    //             break;
+    //         case 'b' :
+    //             b = atoi(optarg);
+    //             break;
+    //     }
+    // }
 
     int S = 1 << s;
     int B = 1 << b;
