@@ -8,18 +8,17 @@
 typedef struct Line {
     bool vilid_bit;
     bool dirty_bit;
-    bool* tag;
+    unsigned tag;
     char* block;
 }Line;
 
 Line* newline(int tag_size, int block_size) {
-    bool* tag = (bool*)malloc(sizeof(bool) * tag_size);
     char* block = (char*)malloc(sizeof(char) * block_size);
 
     Line line = {
         .vilid_bit = false,
         .dirty_bit = false,
-        .tag = tag,
+        .tag = 0,
         .block = block
     };
 
@@ -27,7 +26,6 @@ Line* newline(int tag_size, int block_size) {
 }
 
 void deleteline(Line* line) {
-    free(line->block);
     free(line->block);
 }
 
@@ -66,6 +64,21 @@ void deletecache(Cache* cache) {
     free(cache->sets);
 }
 
+Line* find_line(Line** set, int max_lines, unsigned int tag) {
+    for (int i = 0; i < max_lines; i++) {
+        if (set[i]->vilid_bit && set[i]->tag == tag) {
+            return set[i];
+        }
+    }
+}
+
+void cache_load(Cache* cache, int tag, int set_index, int offset) {
+    set_index %= cache->sets_num;
+    if (!find_line(cache->sets[set_index], cache->max_lines, tag)) {
+        
+    }
+}
+
 
 int main(int argc, int* argv)
 {
@@ -85,6 +98,14 @@ int main(int argc, int* argv)
         }
     }
 
+    int S = 1 << s;
+    int B = 1 << b;
+    int tag_size = 4;
+
+    Cache* myCache = newCache(S, E, tag_size, B);
+
     printSummary(0, 0, 0);
+
+    deletecache(myCache);
     return 0;
 }
