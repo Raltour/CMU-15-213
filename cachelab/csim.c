@@ -4,6 +4,7 @@
 // #include <bits/getopt_core.h>
 #include <stdbool.h>
 
+// ----------------缓存数据定义----------------
 
 typedef struct Line {
     bool vilid_bit;
@@ -70,7 +71,12 @@ void deletecache(Cache* cache) {
     free(cache->sets);
 }
 
-//查找set中是否有某一个tag,若有则返回这个line
+// ----------------缓存数据定义----------------
+
+
+// ----------------缓存操作函数----------------
+
+//查找set中是否有某一个tag,若有则返回这个line，用来确定缓存是否命中
 Line* find_line(Set* set, int lines_num, unsigned int tag) {
     Line* p = set->first;
     while (p != set->last) {
@@ -102,15 +108,29 @@ void move_to_last(Set* set, Line* line) {
     }
 }
 
-//确定某一块不在内存当中时，调用此函数，将这一块加载进来，覆盖掉链表的头部，即使用时间最久远的一项
-void cache_load(Cache* cache, int tag, int set_index, int offset) {
+//确定某一块不在内存当中时，调用此函数，将这一块加载进来，
+//会覆盖掉链表的头部，即使用时间最久远的一项，eviction
+void cache_load(Cache* cache, unsigned int tag, int set_index, int offset) {
     set_index %= cache->sets_num;
     Set* aimSet = &cache->sets[set_index];
 
+    //如果该数据修改过，则进行存储
+    if (aimSet->first->dirty_bit) {
+        store(aimSet, tag);
+    }
     aimSet->first->tag = tag;
     aimSet->first->vilid_bit = true;
     move_to_last(aimSet, aimSet->first);
 }
+
+//调用该函数，将链表中某一项的数据储存，从链表中去除
+void store(Set* set, unsigned int tag) {
+    
+}
+
+// ----------------缓存操作函数----------------
+
+
 
 
 int main(int argc, int* argv)
@@ -140,5 +160,6 @@ int main(int argc, int* argv)
     printSummary(0, 0, 0);
 
     deletecache(myCache);
+
     return 0;
 }
