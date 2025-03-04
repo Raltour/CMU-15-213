@@ -9,44 +9,56 @@ typedef struct Line {
     bool vilid_bit;
     bool dirty_bit;
     unsigned tag;
-    char* block;
+    struct Line* prev;
+    struct Line* next;
 }Line;
 
-Line* newline(int tag_size, int block_size) {
-    char* block = (char*)malloc(sizeof(char) * block_size);
-
+Line* newline(Line* prev, Line* next) {
     Line line = {
         .vilid_bit = false,
         .dirty_bit = false,
         .tag = 0,
-        .block = block
+        .prev = prev,
+        .next = next
     };
 
     return &line;
 }
 
-void deleteline(Line* line) {
-    free(line->block);
+typedef struct Set {
+    Line* first;
+    Line* last;
+    int lines_num;
+}Set;
+
+Set* newSet(int lines_num) {
+    Set set;
+    set.last = newline(NULL, NULL);
+    set.first = set.last;
+    for (int i = 1; i < lines_num; i++) {
+        set.first = newline(NULL, set.first);
+        set.first->next->prev = set.first;
+    }
+    set.lines_num = lines_num;
+
+    return &set;
 }
 
 typedef struct Cache {
-    int max_lines;
+    int lines_num;
     int sets_num;
-    Line*** sets;
+    Set* sets;
 }Cache;
 
-Cache* newCache(int S, int E, int tag_size, int block_size) {
+Cache* newCache(int S, int E) {
     
-    Line*** sets = (Line***)malloc(sizeof(Line**) * S);
+    Set** sets = (Set**)malloc(sizeof(Set*) * S);
     for (int i = 0; i < S; i++) {
-        sets[i] = (Line**)malloc(sizeof(Line*) * E);
-        for (int j = 0; j < E; j++) {
-            sets[i][j] = newline(tag_size, block_size);
-        }
+        sets[i] = newSet(E);
     }
 
     Cache cache = {
-        .max_lines = E,
+        .lines_num = E,
         .sets_num = S,
         .sets = sets
     };
@@ -55,27 +67,45 @@ Cache* newCache(int S, int E, int tag_size, int block_size) {
 }
 
 void deletecache(Cache* cache) {
-    for (int i = 0; i < cache->sets_num; i++) {
-        for (int j = 0; j < cache->max_lines; j ++) {
-            deleteline(cache->sets[i][j]);
-        }
-        free(cache->sets[i]);
-    }
     free(cache->sets);
 }
 
-Line* find_line(Line** set, int max_lines, unsigned int tag) {
-    for (int i = 0; i < max_lines; i++) {
-        if (set[i]->vilid_bit && set[i]->tag == tag) {
-            return set[i];
+Line* find_line(Set* set, int lines_num, unsigned int tag) {
+    Line* p = set->first;
+    while (p != set->last) {
+        if (p->tag == tag) {
+            return p;
         }
+        p = p->next;
     }
+    if (p->tag == tag) {
+        return p;
+    }
+    return NULL;
+}
+
+void move_to_last(Set* set, Line* line, unsigned int tag) {
+    if (line == set->last) {
+        return ;
+    } else if (line == set->first) {
+        set->last->next = set->first;
+        set->last = set->first;
+        set->first = set->first->next;
+        set->last->next = NULL;
+    } else {
+        set->last->next = line;
+        set->last = line;
+        line->prev->next = line->next;
+        line->next = NULL;
+    }
+
 }
 
 void cache_load(Cache* cache, int tag, int set_index, int offset) {
     set_index %= cache->sets_num;
-    if (!find_line(cache->sets[set_index], cache->max_lines, tag)) {
-        
+    Set* aimSet = &cache->sets[set_index];
+    if (!find_line(aimSet, cache->lines_num, tag)) {
+        aimSet->first.tag = tag;
     }
 }
 
@@ -102,7 +132,7 @@ int main(int argc, int* argv)
     int B = 1 << b;
     int tag_size = 4;
 
-    Cache* myCache = newCache(S, E, tag_size, B);
+    Cache* myCache = newCache(S, E);
 
     printSummary(0, 0, 0);
 
