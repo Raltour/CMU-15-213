@@ -294,6 +294,10 @@ void do_bgfg(char **argv)
     int job_jid;
     struct job_t* job;
 
+    sigset_t mask_all, prev_all;
+    Sigfillset(&mask_all);
+
+    Sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
     if (!strcmp(argv[0], "bg")) {
 
         if (argv[1][0] = '%') {
@@ -337,7 +341,7 @@ void do_bgfg(char **argv)
         }
 
     }
-    
+    Sigprocmask(SIG_BLOCK, &prev_all, NULL);
     return;
 }
 
@@ -346,12 +350,15 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
-    sigset_t mask_none
-    Sigemptyset(&mask_none);
+    sigset_t mask, prev;
+    Sigemptyset(&mask);
+    Sigaddset(&mask, SIGCHLD);
 
+    Sigprosmask(SIG_BLOCK, &mask, &prev);
     while (getjobpid(jobs, pid) && getjobpid(jobs, pid)->state == FG) {
-        sigsuspend(mask_none);
+        sigsuspend(prev);
     }
+    Sigprosmask(SIG_BLOCK, &prev, NULL);
     return;
 }
 
