@@ -173,27 +173,35 @@ void eval(char *cmdline)
     char arguments[MAXARGS][MAXLINE];
     int back_ground = parseline(cmdline, arguments);
 
+    sigset_t mask_all, mask_one, prev_one;
+    Sigfillset(&mask_all);
+    Sigempty(&mask_one);
+    Sigaddset(&mask_one, SIGCHLD);
+
     if (!builtin_cmd(arguments)) {
         int pid;
-        if (back_ground) {
-            if ((pid = fork()) == 0) {
-                waitpid(pid, NULL, 0);
-            } else {
 
+        Sigprosmask(SIG_BLOCK, &mask_one, &prev_one);
+        if ((pid = fork()) == 0) {
+            Sigprosmask(SIG_BLOCK, &prev_one, NULL);
+            if (execve(argv[0], argv, environ) < 0) {
+                unix_error("Command not found.\n");
+                exit(0);
             }
-
-        } else {//台前运行
-            if ((pid = fork()) == 0) {
-                waitpid(-1, NULL, 0);
-            } else {
-                addjob(jobs, pid, fg, cmdline);
-                waitpid(pid, NULL, 0);
-            }
-            
         }
 
+        if (!back_ground) {//前台运行
+            Sigprosmask(SIG_BLOCK, &mask_all, NULL);
+            addjob(jobs, pid, fg, cmdline);
+            Sigprosmask(SIG_BLOCK, &prev_one, NULL);
+
+            waitfg(pid);
+        } else {//后台运行
+            Sigprosmask(SIG_BLOCK, &mask_all, NULL);
+            addjob(jobs, pid, bg, cmdline);
+            Sigprosmask(SIG_BLOCK, &prev_one, NULL);
+        }
     }
-    
     return;
 }
 
@@ -338,8 +346,11 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
-    while (getjobpid(jobs, pid)) {
-        sigsuspend(NULL);//我写了个莎娃一
+    sigset_t mask_none
+    Sigemptyset(&mask_none);
+
+    while (getjobpid(jobs, pid) && getjobpid(jobs, pid)->state == FG) {
+        sigsuspend(mask_none);
     }
     return;
 }
@@ -357,10 +368,14 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig)
 {
+    int olderrno = errno;
+
     int pid;
     while ((pid = waitpid(-1, NULL, 0)) > 0) {
         deletejob(jobs, pid);
     }
+
+    errno = olderrno;
     return;
 }
 
