@@ -171,10 +171,18 @@ int main(int argc, char **argv)
 void eval(char *cmdline)
 {
     char arguments[MAXARGS][MAXLINE];
-    parseline(cmdline, arguments);
+    int back_ground = parseline(cmdline, arguments);
+
     if (!builtin_cmd(arguments)) {
-        if ((pid = fork()) == 0)
-        {
+        int pid;
+        if ((pid = fork()) == 0) {
+            
+        } else {
+            if (back_ground) {
+                addjob(jobs, pid, bg, cmdline);
+            } else {
+                addjob(jobs, pid, fg, cmdline);
+            }
         }
     }
 
@@ -250,7 +258,15 @@ int parseline(const char *cmdline, char **argv)
  */
 int builtin_cmd(char **argv)
 {
-    return 0; /* not a builtin command */
+    if(!strcmp(argv[0], "quit")) {
+        exit(0);//我不确定
+    } else if (!strcmp(argv[0], "jobs")) {
+        listjobs(jobs);
+    } else if (!strcmp(argv[0], "bg") || !strcmp(argv[0], "fg")) {
+        do_bgfg(argv);
+    } else {
+        return 0; /* not a builtin command */
+    }
 }
 
 /*
@@ -258,6 +274,46 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
+    if (!strcmp(argv[0], "bg")) {
+
+        if (argv[1][0] = '%') {
+
+            int job_jid = atoi(argv[1] + 1);
+            if (getjobjid(jobs, job_jid)->state == ST) {
+                getjobjid(jobs, job_jid)->state == BG;
+            }
+
+        } else {
+
+            int job_pid = atoi(argv[1]);
+            if (getjobjid(jobs, job_jid)->state == ST) {
+                getjobpid(jobs, job_pid)->state = BG;
+            }
+
+        }
+
+    } else {//输入fg
+
+        if (argv[1][0] = '%') {
+
+            int job_jid = atoi(argv[1] + 1);
+            int job_state = getjobjid(jobs, job_jid);
+            if (state == ST || state == BG) {
+                getjobjid(jobs, job_jid)->state = FG;
+            }
+
+        } else {
+
+            int job_pid = atoi(argv[1]);
+            int job_state = getjobpid(jobs, job_pid);
+            if (state == ST || state == BG) {
+                getjobpid(jobs, job_pid)->state = FG;
+            }
+
+        }
+
+    }
+    
     return;
 }
 
