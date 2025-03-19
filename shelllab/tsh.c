@@ -176,7 +176,6 @@ void eval(char *cmdline)
     if (!builtin_cmd(arguments)) {
         int pid;
         if (back_ground) {
-
             if ((pid = fork()) == 0) {
                 waitpid(pid, NULL, 0);
             } else {
@@ -184,7 +183,6 @@ void eval(char *cmdline)
             }
 
         } else {//台前运行
-
             if ((pid = fork()) == 0) {
                 waitpid(-1, NULL, 0);
             } else {
@@ -194,7 +192,8 @@ void eval(char *cmdline)
             
         }
 
-
+    }
+    
     return;
 }
 
@@ -283,7 +282,6 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
-
     int job_pid;
     int job_jid;
     struct job_t* job;
@@ -340,6 +338,9 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
+    while (getjobpid(jobs, pid)) {
+        sigsuspend(NULL);//我写了个莎娃一
+    }
     return;
 }
 
@@ -356,6 +357,10 @@ void waitfg(pid_t pid)
  */
 void sigchld_handler(int sig)
 {
+    int pid;
+    while ((pid = waitpid(-1, NULL, 0)) > 0) {
+        deletejob(jobs, pid);
+    }
     return;
 }
 
@@ -368,7 +373,6 @@ void sigint_handler(int sig)
 {
     int fg_pid;
     if (!(fg_pid = fgpid(jobs))) {
-        deletejob(jobs, fg_pid);
         kill(SIGINT, fg_pid);
     }
 
