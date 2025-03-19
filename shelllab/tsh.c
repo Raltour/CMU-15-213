@@ -175,16 +175,25 @@ void eval(char *cmdline)
 
     if (!builtin_cmd(arguments)) {
         int pid;
-        if ((pid = fork()) == 0) {
-            
-        } else {
-            if (back_ground) {
-                addjob(jobs, pid, bg, cmdline);
+        if (back_ground) {
+
+            if ((pid = fork()) == 0) {
+                waitpid(pid, NULL, 0);
+            } else {
+
+            }
+
+        } else {//台前运行
+
+            if ((pid = fork()) == 0) {
+                waitpid(-1, NULL, 0);
             } else {
                 addjob(jobs, pid, fg, cmdline);
+                waitpid(pid, NULL, 0);
             }
+            
         }
-    }
+
 
     return;
 }
@@ -259,7 +268,7 @@ int parseline(const char *cmdline, char **argv)
 int builtin_cmd(char **argv)
 {
     if(!strcmp(argv[0], "quit")) {
-        exit(0);//我不确定
+        exit(0);
     } else if (!strcmp(argv[0], "jobs")) {
         listjobs(jobs);
     } else if (!strcmp(argv[0], "bg") || !strcmp(argv[0], "fg")) {
@@ -274,20 +283,27 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
+
+    int job_pid;
+    int job_jid;
+    struct job_t* job;
+
     if (!strcmp(argv[0], "bg")) {
 
         if (argv[1][0] = '%') {
 
-            int job_jid = atoi(argv[1] + 1);
-            if (getjobjid(jobs, job_jid)->state == ST) {
-                getjobjid(jobs, job_jid)->state == BG;
+            job_jid = atoi(argv[1] + 1);
+            if ((job = getjobjid(jobs, job_jid))->state == ST) {
+                job->state == BG;
+                kill(job->pid, SIGCONT);
             }
 
         } else {
 
-            int job_pid = atoi(argv[1]);
-            if (getjobjid(jobs, job_jid)->state == ST) {
-                getjobpid(jobs, job_pid)->state = BG;
+            job_pid = atoi(argv[1]);
+            if ((job = getjobjid(jobs, job_jid))->state == ST) {
+                job->state = BG;
+                kill(job->pid, SIGCONT);
             }
 
         }
@@ -297,17 +313,19 @@ void do_bgfg(char **argv)
         if (argv[1][0] = '%') {
 
             int job_jid = atoi(argv[1] + 1);
-            int job_state = getjobjid(jobs, job_jid);
-            if (state == ST || state == BG) {
-                getjobjid(jobs, job_jid)->state = FG;
+            job = getjobjid(jobs, job_jid);
+            if (job->state == ST || job->state == BG) {
+                job->state = FG;
+                kill(job->pid, SIGCONT);
             }
 
         } else {
 
             int job_pid = atoi(argv[1]);
-            int job_state = getjobpid(jobs, job_pid);
-            if (state == ST || state == BG) {
-                getjobpid(jobs, job_pid)->state = FG;
+            job = getjobpid(jobs, job_pid);
+            if (job->state == ST || job->state == BG) {
+                job->state = FG;
+                kill(job->pid, SIGCONT);
             }
 
         }
@@ -348,6 +366,12 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig)
 {
+    int fg_pid;
+    if (!(fg_pid = fgpid(jobs))) {
+        deletejob(jobs, fg_pid);
+        kill(SIGINT, fg_pid);
+    }
+
     return;
 }
 
@@ -358,6 +382,12 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig)
 {
+    int fg_pid;
+    if (!(fg_pid = fgpid(jobs))) {
+        getjobpid(jobs, fg_pid)->state = ST;
+        kill(SIGTSTP, fg_pid);
+    }
+
     return;
 }
 
