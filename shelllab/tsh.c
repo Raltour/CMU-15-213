@@ -174,16 +174,16 @@ void eval(char *cmdline)
     int back_ground = parseline(cmdline, arguments);
 
     sigset_t mask_all, mask_one, prev_one;
-    Sigfillset(&mask_all);
-    Sigempty(&mask_one);
-    Sigaddset(&mask_one, SIGCHLD);
+    sigfillset(&mask_all);
+    sigempty(&mask_one);
+    sigaddset(&mask_one, SIGCHLD);
 
     if (!builtin_cmd(arguments)) {
         int pid;
 
-        Sigprosmask(SIG_BLOCK, &mask_one, &prev_one);
+        sigprocmask(SIG_BLOCK, &mask_one, &prev_one);
         if ((pid = fork()) == 0) {
-            Sigprosmask(SIG_BLOCK, &prev_one, NULL);
+            sigprocmask(SIG_BLOCK, &prev_one, NULL);
             if (execve(cmdline[0], cmdline, environ) < 0) {
                 unix_error("Command not found.\n");
                 exit(0);
@@ -191,15 +191,15 @@ void eval(char *cmdline)
         }
 
         if (!back_ground) {//前台运行
-            Sigprosmask(SIG_BLOCK, &mask_all, NULL);
+            sigprocmask(SIG_BLOCK, &mask_all, NULL);
             addjob(jobs, pid, FG, cmdline);
-            Sigprosmask(SIG_BLOCK, &prev_one, NULL);
+            sigprocmask(SIG_BLOCK, &prev_one, NULL);
 
             waitfg(pid);
         } else {//后台运行
-            Sigprosmask(SIG_BLOCK, &mask_all, NULL);
+            sigprocmask(SIG_BLOCK, &mask_all, NULL);
             addjob(jobs, pid, BG, cmdline);
-            Sigprosmask(SIG_BLOCK, &prev_one, NULL);
+            sigprocmask(SIG_BLOCK, &prev_one, NULL);
         }
     }
     return;
@@ -295,9 +295,9 @@ void do_bgfg(char **argv)
     struct job_t* job;
 
     sigset_t mask_all, prev_all;
-    Sigfillset(&mask_all);
+    sigfillset(&mask_all);
 
-    Sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+    sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
     if (!strcmp(argv[0], "bg")) {
 
         if (argv[1][0] = '%') {
@@ -341,7 +341,7 @@ void do_bgfg(char **argv)
         }
 
     }
-    Sigprocmask(SIG_BLOCK, &prev_all, NULL);
+    sigprocmask(SIG_BLOCK, &prev_all, NULL);
     return;
 }
 
@@ -354,7 +354,7 @@ void waitfg(pid_t pid)
     sigemptyset(&mask);
     sigaddset(&mask, SIGCHLD);
 
-    sigprosmask(SIG_BLOCK, &mask, &prev);
+    sigprocmask(SIG_BLOCK, &mask, &prev);
     while (getjobpid(jobs, pid) && getjobpid(jobs, pid)->state == FG) {
         sigsuspend(&prev);
     }
@@ -381,7 +381,7 @@ void sigchld_handler(int sig)
 
     int pid;
     while ((pid = waitpid(-1, NULL, 0)) > 0) {
-        sigprocmask(SIG_SETMASK, &mask_all, prev_all);
+        sigprocmask(SIG_SETMASK, &mask_all, &prev_all);
         deletejob(jobs, pid);
         sigprocmask(SIG_SETMASK, &prev_all, NULL);
     }
@@ -417,7 +417,7 @@ void sigtstp_handler(int sig)
 
     int fg_pid;
     if (!(fg_pid = fgpid(jobs))) {
-        sigprocmask(SIG_SETMASK, &mask_all, prev_all);
+        sigprocmask(SIG_SETMASK, &mask_all, &prev_all);
         getjobpid(jobs, fg_pid)->state = ST;
         sigprocmask(SIG_SETMASK, &prev_all, NULL);
         kill(SIGTSTP, fg_pid);
