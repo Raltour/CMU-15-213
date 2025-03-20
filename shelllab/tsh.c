@@ -184,7 +184,7 @@ void eval(char *cmdline)
         Sigprosmask(SIG_BLOCK, &mask_one, &prev_one);
         if ((pid = fork()) == 0) {
             Sigprosmask(SIG_BLOCK, &prev_one, NULL);
-            if (execve(argv[0], argv, environ) < 0) {
+            if (execve(cmdline[0], cmdline, environ) < 0) {
                 unix_error("Command not found.\n");
                 exit(0);
             }
@@ -192,13 +192,13 @@ void eval(char *cmdline)
 
         if (!back_ground) {//前台运行
             Sigprosmask(SIG_BLOCK, &mask_all, NULL);
-            addjob(jobs, pid, fg, cmdline);
+            addjob(jobs, pid, FG, cmdline);
             Sigprosmask(SIG_BLOCK, &prev_one, NULL);
 
             waitfg(pid);
         } else {//后台运行
             Sigprosmask(SIG_BLOCK, &mask_all, NULL);
-            addjob(jobs, pid, bg, cmdline);
+            addjob(jobs, pid, BG, cmdline);
             Sigprosmask(SIG_BLOCK, &prev_one, NULL);
         }
     }
@@ -356,7 +356,7 @@ void waitfg(pid_t pid)
 
     Sigprosmask(SIG_BLOCK, &mask, &prev);
     while (getjobpid(jobs, pid) && getjobpid(jobs, pid)->state == FG) {
-        sigsuspend(prev);
+        sigsuspend(&prev);
     }
     Sigprosmask(SIG_BLOCK, &prev, NULL);
     return;
