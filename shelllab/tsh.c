@@ -184,7 +184,7 @@ void eval(char *cmdline)
         sigprocmask(SIG_BLOCK, &mask_one, &prev_one);
         if ((pid = fork()) == 0) {
             sigprocmask(SIG_BLOCK, &prev_one, NULL);
-            if (execve(arguments[0], cmdline, environ) < 0) {
+            if (execve(arguments[0], arguments, environ) < 0) {
                 unix_error("Command not found.\n");
                 exit(0);
             }
@@ -280,9 +280,8 @@ int builtin_cmd(char **argv)
         listjobs(jobs);
     } else if (!strcmp(argv[0], "bg") || !strcmp(argv[0], "fg")) {
         do_bgfg(argv);
-    } else {
-        return 0; /* not a builtin command */
     }
+    return 0; /* not a builtin command */
 }
 
 /*
@@ -311,7 +310,7 @@ void do_bgfg(char **argv)
         } else {
 
             job_pid = atoi(argv[1]);
-            if ((job = getjobjid(jobs, job_jid))->state == ST) {
+            if ((job = getjobpid(jobs, job_pid))->state == ST) {
                 job->state = BG;
                 kill(job->pid, SIGCONT);
             }
