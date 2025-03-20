@@ -170,12 +170,12 @@ int main(int argc, char **argv)
  */
 void eval(char *cmdline)
 {
-    char arguments[MAXARGS][MAXLINE];
+    char* arguments[MAXARGS];
     int back_ground = parseline(cmdline, arguments);
 
     sigset_t mask_all, mask_one, prev_one;
     sigfillset(&mask_all);
-    sigempty(&mask_one);
+    sigemptyset(&mask_one);
     sigaddset(&mask_one, SIGCHLD);
 
     if (!builtin_cmd(arguments)) {
@@ -184,7 +184,7 @@ void eval(char *cmdline)
         sigprocmask(SIG_BLOCK, &mask_one, &prev_one);
         if ((pid = fork()) == 0) {
             sigprocmask(SIG_BLOCK, &prev_one, NULL);
-            if (execve(cmdline[0], cmdline, environ) < 0) {
+            if (execve(arguments[0], cmdline, environ) < 0) {
                 unix_error("Command not found.\n");
                 exit(0);
             }
@@ -300,11 +300,11 @@ void do_bgfg(char **argv)
     sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
     if (!strcmp(argv[0], "bg")) {
 
-        if (argv[1][0] = '%') {
+        if (argv[1][0] == '%') {
 
             job_jid = atoi(argv[1] + 1);
             if ((job = getjobjid(jobs, job_jid))->state == ST) {
-                job->state == BG;
+                job->state = BG;
                 kill(job->pid, SIGCONT);
             }
 
@@ -320,7 +320,7 @@ void do_bgfg(char **argv)
 
     } else {//输入fg
 
-        if (argv[1][0] = '%') {
+        if (argv[1][0] == '%') {
 
             int job_jid = atoi(argv[1] + 1);
             job = getjobjid(jobs, job_jid);
@@ -358,7 +358,7 @@ void waitfg(pid_t pid)
     while (getjobpid(jobs, pid) && getjobpid(jobs, pid)->state == FG) {
         sigsuspend(&prev);
     }
-    sigprosmask(SIG_BLOCK, &prev, NULL);
+    sigprocmask(SIG_BLOCK, &prev, NULL);
     return;
 }
 
