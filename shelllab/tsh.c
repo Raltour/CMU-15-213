@@ -351,14 +351,14 @@ void do_bgfg(char **argv)
 void waitfg(pid_t pid)
 {
     sigset_t mask, prev;
-    Sigemptyset(&mask);
-    Sigaddset(&mask, SIGCHLD);
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGCHLD);
 
-    Sigprosmask(SIG_BLOCK, &mask, &prev);
+    sigprosmask(SIG_BLOCK, &mask, &prev);
     while (getjobpid(jobs, pid) && getjobpid(jobs, pid)->state == FG) {
         sigsuspend(&prev);
     }
-    Sigprosmask(SIG_BLOCK, &prev, NULL);
+    sigprosmask(SIG_BLOCK, &prev, NULL);
     return;
 }
 
@@ -376,10 +376,14 @@ void waitfg(pid_t pid)
 void sigchld_handler(int sig)
 {
     int olderrno = errno;
+    sigset_t mask_all, prev_all;
+    sigfillset(&mask_all);
 
     int pid;
     while ((pid = waitpid(-1, NULL, 0)) > 0) {
+        sigprocmask(SIG_SETMASK, &mask_all, prev_all);
         deletejob(jobs, pid);
+        sigprocmask(SIG_SETMASK, &prev_all, NULL);
     }
 
     errno = olderrno;
@@ -408,9 +412,14 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig)
 {
+    sigset_t mask_all, prev_all;
+    sigfillset(&mask_all);
+
     int fg_pid;
     if (!(fg_pid = fgpid(jobs))) {
+        sigprocmask(SIG_SETMASK, &mask_all, prev_all);
         getjobpid(jobs, fg_pid)->state = ST;
+        sigprocmask(SIG_SETMASK, &prev_all, NULL);
         kill(SIGTSTP, fg_pid);
     }
 
