@@ -173,7 +173,7 @@ void eval(char *cmdline)
     char* arguments[MAXARGS];
     int back_ground = parseline(cmdline, arguments);
 
-    sigset_t mask_all, mask_one, prev_one;
+    sigset_t mask_all, mask_one, prev_one, prev_all;
     sigfillset(&mask_all);
     sigemptyset(&mask_one);
     sigaddset(&mask_one, SIGCHLD);
@@ -191,15 +191,16 @@ void eval(char *cmdline)
         }
 
         if (!back_ground) {//前台运行
-            sigprocmask(SIG_BLOCK, &mask_all, NULL);
+            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
             addjob(jobs, pid, FG, cmdline);
-            sigprocmask(SIG_BLOCK, &prev_one, NULL);
+            waitfg(pid);//等待前台进程完成
+            sigprocmask(SIG_BLOCK, &prev_all, NULL);//取消阻塞
 
-            waitfg(pid);
+
         } else {//后台运行
-            sigprocmask(SIG_BLOCK, &mask_all, NULL);
+            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
             addjob(jobs, pid, BG, cmdline);
-            sigprocmask(SIG_BLOCK, &prev_one, NULL);
+            sigprocmask(SIG_BLOCK, &prev_all, NULL);//取消阻塞
         }
     }
     return;
@@ -349,15 +350,13 @@ void do_bgfg(char **argv)
  */
 void waitfg(pid_t pid)
 {
-    sigset_t mask, prev;
-    sigemptyset(&mask);
-    sigaddset(&mask, SIGCHLD);
+    sigset_t mask;
+    sigfillset(&mask);
+    sigdelset(&mask, SIGCHLD);
 
-    sigprocmask(SIG_BLOCK, &mask, &prev);
     while (getjobpid(jobs, pid) && getjobpid(jobs, pid)->state == FG) {
-        sigsuspend(&prev);
+        sigsuspend(&mask);
     }
-    sigprocmask(SIG_BLOCK, &prev, NULL);
     return;
 }
 
@@ -380,9 +379,9 @@ void sigchld_handler(int sig)
 
     int pid;
     while ((pid = waitpid(-1, NULL, 0)) > 0) {
-        sigprocmask(SIG_SETMASK, &mask_all, &prev_all);
+        sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
         deletejob(jobs, pid);
-        sigprocmask(SIG_SETMASK, &prev_all, NULL);
+        sigprocmask(SIG_BLOCK, &prev_all, NULL);
     }
 
     errno = olderrno;
