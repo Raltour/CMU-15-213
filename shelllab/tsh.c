@@ -2,7 +2,7 @@
  * tsh - A tiny shell program with job control
  *
  * Mingze Li
- * 已通过测试：01 02 03 04 
+ * 已通过测试：01 02 03 04 06
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -199,13 +199,11 @@ void eval(char *cmdline)
             addjob(jobs, pid, FG, cmdline);
             waitfg(pid);//等待前台进程完成
             sigprocmask(SIG_BLOCK, &prev_all, NULL);//取消阻塞
-            //printf("11\n");
         } else {//后台运行
             sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
             addjob(jobs, pid, BG, cmdline);
             sigprocmask(SIG_BLOCK, &prev_all, NULL);//取消阻塞
             printf("[%d] (%d) Running %s", maxjid(jobs), pid, cmdline);//[1] (9886) Running ./myspin l &
-            //printf("22\n");
         }
 
     }
@@ -284,9 +282,7 @@ int builtin_cmd(char **argv)
     if(!strcmp(argv[0], "quit")) {
         exit(0);
     } else if (!strcmp(argv[0], "jobs")) {
-        //printf("33\n");
         listjobs(jobs);
-        //printf("44\n");
         return 1;
     } else if (!strcmp(argv[0], "bg") || !strcmp(argv[0], "fg")) {
         do_bgfg(argv);
@@ -365,7 +361,7 @@ void waitfg(pid_t pid)
     // sigdelset(&mask, SIGCHLD);
     // sigdelset(&mask, SIGINT);
 
-    while (getjobpid(jobs, pid) && getjobpid(jobs, pid)->state == FG) {
+    while (fgpid(jobs)) {
         sigsuspend(&mask);
     }
     return;
@@ -406,11 +402,15 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig)
 {
+    sigset_t mask, prev;
+    sigemptyset(&mask);
+    sigprocmask(SIG_BLOCK, &mask, &prev);
     int fg_pid;
     if ((fg_pid = fgpid(jobs))) {
-        printf("Job [%d] (%d) terminated by signal 2\n", maxjid(jobs), fg_pid);
-        kill(SIGINT, fg_pid);
+        printf("Job [%d] (%d) terminated by signal 2\n", maxjid(jobs), fg_pid);//信号处理里面不要有printf
+        kill(fg_pid, SIGINT);
     }
+    sigprocmask(SIG_BLOCK, &prev, NULL);
 
     return;
 }
@@ -426,11 +426,11 @@ void sigtstp_handler(int sig)
     sigfillset(&mask_all);
 
     int fg_pid;
-    if (!(fg_pid = fgpid(jobs))) {
+    if ((fg_pid = fgpid(jobs))) {
         sigprocmask(SIG_SETMASK, &mask_all, &prev_all);
         getjobpid(jobs, fg_pid)->state = ST;
         sigprocmask(SIG_SETMASK, &prev_all, NULL);
-        kill(SIGTSTP, fg_pid);
+        kill(fg_pid, SIGTSTP);
     }
 
     return;
