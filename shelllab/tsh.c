@@ -2,7 +2,7 @@
  * tsh - A tiny shell program with job control
  *
  * Mingze Li
- * 已通过测试：01 02 03 04 _05 06
+ * 已通过测试：01 02 03 04 05 06 07 08
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -190,6 +190,7 @@ void eval(char *cmdline)
 
         sigprocmask(SIG_BLOCK, &mask_one, NULL);
         if ((pid = fork()) == 0) {
+            setpgid(0, 0);
             sigprocmask(SIG_UNBLOCK, &mask_one, NULL);
             if (execve(arguments[0], arguments, environ) < 0) {
                 unix_error("Command not found.\n");
@@ -384,14 +385,17 @@ void waitfg(pid_t pid)
 void sigchld_handler(int sig)
 {
     int olderrno = errno;
-    sigset_t mask_all, prev_all;
-    sigfillset(&mask_all);
+    sigset_t mask_all, prev;
+    sigemptyset(&mask_all);
+    sigaddset(&mask_all, SIGCHLD);
+    sigaddset(&mask_all, SIGINT);
+    sigaddset(&mask_all, SIGSTOP);
 
     int pid;
-    while ((pid = waitpid(-1, NULL, 0)) > 0) {
-        sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+    while ((pid = waitpid(-1, NULL,WNOHANG)) > 0) {
+        sigprocmask(SIG_BLOCK, &mask_all, &prev);
         deletejob(jobs, pid);
-        sigprocmask(SIG_BLOCK, &prev_all, NULL);
+        sigprocmask(SIG_SETMASK, &prev, NULL);
     }
 
     errno = olderrno;
@@ -405,15 +409,16 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig)
 {
-    sigset_t mask;
+    sigset_t mask, prev;
     sigemptyset(&mask);
-    sigprocmask(SIG_BLOCK, &mask, NULL);
+    sigaddset(&mask, SIGCHLD);
+    sigprocmask(SIG_UNBLOCK, &mask, &prev);
     int fg_pid;
     if ((fg_pid = fgpid(jobs))) {
         printf("Job [%d] (%d) terminated by signal 2\n", maxjid(jobs), fg_pid);
         kill(fg_pid, SIGINT);
     }
-    sigprocmask(SIG_UNBLOCK, &mask, NULL);
+    sigprocmask(SIG_SETMASK, &prev, NULL);
 
     return;
 }
@@ -425,14 +430,18 @@ void sigint_handler(int sig)
  */
 void sigtstp_handler(int sig)
 {
-    sigset_t mask_all, prev_all;
-    sigfillset(&mask_all);
+    sigset_t mask, prev;
+    sigemptyset(&mask);
+    sigaddset(&mask, SIGCHLD);
+    sigaddset(&mask, SIGINT);
+    sigaddset(&mask, SIGTSTP);
 
     int fg_pid;
     if ((fg_pid = fgpid(jobs))) {
-        sigprocmask(SIG_SETMASK, &mask_all, &prev_all);
+        sigprocmask(SIG_BLOCK, &mask, &prev);
         getjobpid(jobs, fg_pid)->state = ST;
-        sigprocmask(SIG_SETMASK, &prev_all, NULL);
+        printf("Job [%d] (%d) stopped by signal 20\n", pid2jid(fg_pid), fg_pid);
+        sigprocmask(SIG_SETMASK, &prev, NULL);
         kill(fg_pid, SIGTSTP);
     }
 
