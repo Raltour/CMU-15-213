@@ -2,7 +2,7 @@
  * tsh - A tiny shell program with job control
  *
  * Mingze Li
- * 已通过测试：01 02 03 04 06
+ * 已通过测试：01 02 03 04 _05 06
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -174,8 +174,11 @@ void eval(char *cmdline)
     char* arguments[MAXARGS];
     int back_ground = parseline(cmdline, arguments);
 
-    sigset_t mask_all, mask_one, prev_one, prev_all;
-    sigfillset(&mask_all);
+    sigset_t mask_all, mask_one;
+    sigemptyset(&mask_all);
+    sigaddset(&mask_all, SIGCHLD);
+    sigaddset(&mask_all, SIGINT);
+    sigaddset(&mask_all, SIGSTOP);
     sigemptyset(&mask_one);
     sigaddset(&mask_one, SIGCHLD);
 
@@ -185,27 +188,29 @@ void eval(char *cmdline)
     if (!builtin_cmd(arguments)) {
         int pid;
 
-        sigprocmask(SIG_BLOCK, &mask_one, &prev_one);
+        sigprocmask(SIG_BLOCK, &mask_one, NULL);
         if ((pid = fork()) == 0) {
-            sigprocmask(SIG_BLOCK, &prev_one, NULL);
+            sigprocmask(SIG_UNBLOCK, &mask_one, NULL);
             if (execve(arguments[0], arguments, environ) < 0) {
                 unix_error("Command not found.\n");
                 exit(0);
             }
+        } else if (pid < 0) {
+            unix_error("fork failed.\n");
+            exit(0);
         }
 
         if (!back_ground) {//前台运行
-            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+            sigprocmask(SIG_BLOCK, &mask_all, NULL);
             addjob(jobs, pid, FG, cmdline);
             waitfg(pid);//等待前台进程完成
-            sigprocmask(SIG_BLOCK, &prev_all, NULL);//取消阻塞
+            sigprocmask(SIG_UNBLOCK, &mask_all, NULL);//取消阻塞
         } else {//后台运行
-            sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+            sigprocmask(SIG_BLOCK, &mask_all, NULL);
             addjob(jobs, pid, BG, cmdline);
-            sigprocmask(SIG_BLOCK, &prev_all, NULL);//取消阻塞
-            printf("[%d] (%d) Running %s", maxjid(jobs), pid, cmdline);//[1] (9886) Running ./myspin l &
+            printf("[%d] (%d) Running %s", maxjid(jobs), pid, cmdline);
+            sigprocmask(SIG_UNBLOCK, &mask_all, NULL);//取消阻塞
         }
-
     }
     return;
 }
@@ -358,8 +363,6 @@ void waitfg(pid_t pid)
 {
     sigset_t mask;
     sigemptyset(&mask);
-    // sigdelset(&mask, SIGCHLD);
-    // sigdelset(&mask, SIGINT);
 
     while (fgpid(jobs)) {
         sigsuspend(&mask);
@@ -402,15 +405,15 @@ void sigchld_handler(int sig)
  */
 void sigint_handler(int sig)
 {
-    sigset_t mask, prev;
+    sigset_t mask;
     sigemptyset(&mask);
-    sigprocmask(SIG_BLOCK, &mask, &prev);
+    sigprocmask(SIG_BLOCK, &mask, NULL);
     int fg_pid;
     if ((fg_pid = fgpid(jobs))) {
-        printf("Job [%d] (%d) terminated by signal 2\n", maxjid(jobs), fg_pid);//信号处理里面不要有printf
+        printf("Job [%d] (%d) terminated by signal 2\n", maxjid(jobs), fg_pid);
         kill(fg_pid, SIGINT);
     }
-    sigprocmask(SIG_BLOCK, &prev, NULL);
+    sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
     return;
 }
