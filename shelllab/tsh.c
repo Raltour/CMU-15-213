@@ -2,7 +2,7 @@
  * tsh - A tiny shell program with job control
  *
  * Mingze Li
- * 已通过测试：01 02 03 04 05 06 07 08 09 10 11 12 13
+ * 已通过测试：01 02 03 04 05 06 07 08 09 10 11 12 13 14 15
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -302,62 +302,56 @@ int builtin_cmd(char **argv)
  */
 void do_bgfg(char **argv)
 {
-    int job_pid;
-    int job_jid;
     struct job_t* job;
 
     sigset_t mask_all, prev_all;
     sigfillset(&mask_all);
 
-    sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
-    if (!strcmp(argv[0], "bg")) {//输入bg
+    if (argv[1] == NULL || argv[1][0] == '\0') {
+        printf("%s command requires PID or %%jobid argument\n", argv[0]);
+        return;
+    }
 
-        if (argv[1][0] == '%') {
+    int state = strcmp(argv[0], "bg");//1 is fg, 0 is bg
+    int jidorpid = (argv[1][0] == '%');//1 is jid, 0 is pid
+    int id;
 
-            job_jid = atoi(argv[1] + 1);
-            if ((job = getjobjid(jobs, job_jid))->state == ST) {
-                job->state = BG;
-                kill(-job->pid, SIGCONT);
-                printf("[%d] (%d) %s", job_jid, job->pid, job->cmdline);
+    if (jidorpid) {
+        if (isdigit(argv[1][1])) {
+            id = atoi(argv[1] + 1);
+            if (!(job = getjobjid(jobs, id))) {
+                printf("%%%d: No such job\n", id);
+                return;
             }
-
         } else {
-
-            job_pid = atoi(argv[1]);
-            if ((job = getjobpid(jobs, job_pid))->state == ST) {
-                job->state = BG;
-                kill(-job->pid, SIGCONT);
-            }
-
+            printf("%s: argument must be a PID or %%jobid\n", argv[0]);
+            return;
         }
-
-    } else {//输入fg
-
-        if (argv[1] == NULL || argv[1][0] == '\0') {
-            unix_error("fg command requires PID or %%jobid argument\n");
-        } else {
-            if (argv[1][0] == '%') {
-
-                int job_jid = atoi(argv[1] + 1);
-                job = getjobjid(jobs, job_jid);
-                if (job->state == ST || job->state == BG) {
-                    job->state = FG;
-                    kill(-job->pid, SIGCONT);
-                }
-    
-            } else {
-    
-                int job_pid = atoi(argv[1]);
-                job = getjobpid(jobs, job_pid);
-                if (job->state == ST || job->state == BG) {
-                    job->state = FG;
-                    kill(-job->pid, SIGCONT);
-                }
-    
+    } else {
+        if (isdigit(argv[1][0])) {
+            id = atoi(argv[1]);
+            if (!(job = getjobpid(jobs, id))) {
+                printf("(%d): No such process\n", id);
+                return;
             }
+        } else {
+            printf("%s: argument must be a PID or %%jobid\n", state ? "fg" : "bg");
+            return;
         }
     }
-    sigprocmask(SIG_BLOCK, &prev_all, NULL);
+
+    sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
+
+    if (state) {
+        job->state = FG;
+        kill(-job->pid, SIGCONT);
+    } else {
+        job->state = BG;
+        kill(-job->pid, SIGCONT);
+        printf("[%d] (%d) %s", job->jid, job->pid, job->cmdline);
+    }
+
+    sigprocmask(SIG_SETMASK, &prev_all, NULL);
     return;
 }
 
