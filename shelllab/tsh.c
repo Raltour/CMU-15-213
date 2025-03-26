@@ -2,7 +2,7 @@
  * tsh - A tiny shell program with job control
  *
  * Mingze Li
- * 已通过测试：01 02 03 04 05 06 07 08
+ * 已通过测试：01 02 03 04 05 06 07 08 09 10 11 12 13
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -310,14 +310,15 @@ void do_bgfg(char **argv)
     sigfillset(&mask_all);
 
     sigprocmask(SIG_BLOCK, &mask_all, &prev_all);
-    if (!strcmp(argv[0], "bg")) {
+    if (!strcmp(argv[0], "bg")) {//输入bg
 
         if (argv[1][0] == '%') {
 
             job_jid = atoi(argv[1] + 1);
             if ((job = getjobjid(jobs, job_jid))->state == ST) {
                 job->state = BG;
-                kill(job->pid, SIGCONT);
+                kill(-job->pid, SIGCONT);
+                printf("[%d] (%d) %s", job_jid, job->pid, job->cmdline);
             }
 
         } else {
@@ -325,33 +326,36 @@ void do_bgfg(char **argv)
             job_pid = atoi(argv[1]);
             if ((job = getjobpid(jobs, job_pid))->state == ST) {
                 job->state = BG;
-                kill(job->pid, SIGCONT);
+                kill(-job->pid, SIGCONT);
             }
 
         }
 
     } else {//输入fg
 
-        if (argv[1][0] == '%') {
-
-            int job_jid = atoi(argv[1] + 1);
-            job = getjobjid(jobs, job_jid);
-            if (job->state == ST || job->state == BG) {
-                job->state = FG;
-                kill(job->pid, SIGCONT);
-            }
-
+        if (argv[1] == NULL || argv[1][0] == '\0') {
+            unix_error("fg command requires PID or %%jobid argument\n");
         } else {
+            if (argv[1][0] == '%') {
 
-            int job_pid = atoi(argv[1]);
-            job = getjobpid(jobs, job_pid);
-            if (job->state == ST || job->state == BG) {
-                job->state = FG;
-                kill(job->pid, SIGCONT);
+                int job_jid = atoi(argv[1] + 1);
+                job = getjobjid(jobs, job_jid);
+                if (job->state == ST || job->state == BG) {
+                    job->state = FG;
+                    kill(-job->pid, SIGCONT);
+                }
+    
+            } else {
+    
+                int job_pid = atoi(argv[1]);
+                job = getjobpid(jobs, job_pid);
+                if (job->state == ST || job->state == BG) {
+                    job->state = FG;
+                    kill(-job->pid, SIGCONT);
+                }
+    
             }
-
         }
-
     }
     sigprocmask(SIG_BLOCK, &prev_all, NULL);
     return;
@@ -392,7 +396,7 @@ void sigchld_handler(int sig)
     sigaddset(&mask_all, SIGSTOP);
 
     int pid;
-    while ((pid = waitpid(-1, NULL,WNOHANG)) > 0) {
+    while ((pid = waitpid(-1, NULL, WNOHANG)) > 0) {
         sigprocmask(SIG_BLOCK, &mask_all, &prev);
         deletejob(jobs, pid);
         sigprocmask(SIG_SETMASK, &prev, NULL);
@@ -416,7 +420,7 @@ void sigint_handler(int sig)
     int fg_pid;
     if ((fg_pid = fgpid(jobs))) {
         printf("Job [%d] (%d) terminated by signal 2\n", maxjid(jobs), fg_pid);
-        kill(fg_pid, SIGINT);
+        kill(-fg_pid, SIGINT);
     }
     sigprocmask(SIG_SETMASK, &prev, NULL);
 
@@ -442,7 +446,8 @@ void sigtstp_handler(int sig)
         getjobpid(jobs, fg_pid)->state = ST;
         printf("Job [%d] (%d) stopped by signal 20\n", pid2jid(fg_pid), fg_pid);
         sigprocmask(SIG_SETMASK, &prev, NULL);
-        kill(fg_pid, SIGTSTP);
+        kill(-fg_pid, SIGTSTP);
+        fflush(stdout);
     }
 
     return;
