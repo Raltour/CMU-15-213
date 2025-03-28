@@ -191,7 +191,7 @@ void eval(char *cmdline)
         sigprocmask(SIG_BLOCK, &mask_one, NULL);
         if ((pid = fork()) == 0) {
             setpgid(0, 0);
-            sigprocmask(SIG_UNBLOCK, &mask_one, NULL);
+            sigprocmask(SIG_UNBLOCK, &mask_all, NULL);
             if (execve(arguments[0], arguments, environ) < 0) {
                 unix_error("Command not found.\n");
                 exit(0);
