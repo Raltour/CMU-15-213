@@ -24,15 +24,15 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "ateam",
+    "only my self haha",
     /* First member's full name */
-    "Harry Bovik",
+    "Mingze Li",
     /* First member's email address */
-    "bovik@cs.cmu.edu",
+    "hahahaha@cs.cmu.edu",
     /* Second member's full name (leave blank if none) */
-    "",
+    " ",
     /* Second member's email address (leave blank if none) */
-    ""
+    " "
 };
 
 /* single word (4) or double word (8) alignment */
@@ -58,6 +58,7 @@ int mm_init(void)
  */
 void *mm_malloc(size_t size)
 {
+    printf("%d\n%d\n", sizeof(size_t), SIZE_T_SIZE);
     int newsize = ALIGN(size + SIZE_T_SIZE);
     void *p = mem_sbrk(newsize);
     if (p == (void *)-1)
