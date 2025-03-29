@@ -16,6 +16,7 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
+#include <math.h>
 
 #include "mm.h"
 #include "memlib.h"
@@ -124,6 +125,7 @@ team_t team = {
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_BLOCK_SIZE((char *)(bp) - WSIZE))
 
 
+
 /**
  * return a pointer to the linked list in the list array.
  */
@@ -132,6 +134,47 @@ static size_t* getListPtr(int k) {
     p += (k - 4);
     return p;
 }
+
+/**
+ * return the pow, satisfy that
+ * 2 ^ k >= payload(size here) + 8(overhead)
+ */
+static int adjustSize(int size) {
+    int k = 0;
+    size += 8;
+    while (size > 1) {
+        size /= 2;
+        k++;
+    }
+    if (k < 4)
+        k = 4;
+    return k;
+}
+
+/**
+ * return the pointer to the block used to malloc.
+ * split the original block to meet the size.
+ * the leaved block(if exist)
+ */
+static size_t* splitBlock(size_t* ptr, int k) {
+    return ptr;
+}
+
+/**
+ * get more heap memmory for malloc.
+ * size = 2 ^ k
+ */
+static size_t *extendHeap(int k) {
+
+}
+
+/**
+ * init the header and the footer according to the k(size = 2 ^ k)
+ */
+static void place(size_t * ptr, int k) {
+
+}
+
 
 
 /* 
@@ -160,15 +203,29 @@ void *mm_malloc(size_t size) {
     if (size <= 0 || size > 8192)
         return NULL;
 
-    int k = 0;
-    while (size > 1) {
-        size /= 2;
-        k++;
-    }
-    if (k < 4)
-        k = 4;
+    int k = adjustSize(size);
 
-    size_t p = getListPtr(k);
+    size_t* p = getListPtr(k);
+    int temp_k = k;
+
+    size_t* block = NULL;
+    while (k < 14) {
+        if (p == NULL) {
+            p++;
+            k++;
+        } else {
+            block = splitBlock(p, temp_k);
+            break;
+        }
+    }
+    if (k == 14) {
+        block = extendHeap(temp_k);
+    }
+
+    place(block, k);
+
+    block += 1;
+    return (void *)block;
 }
 
 /*
