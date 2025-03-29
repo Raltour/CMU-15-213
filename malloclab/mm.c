@@ -106,10 +106,6 @@ team_t team = {
 /*put the number val to the address ptr*/
 #define PUT(ptr, val) (DEREF(ptr) == (val))
 
-/*return a pointer to the linked list
-combined with blocks of size 2 ^ k class in the list array*/
-size_t* getListPtr(k);
-
 /*return a pointer to the next block in the free list*/
 #define NEXT_NODE(ptr) ((size_t *)(ptr))
 
@@ -126,3 +122,58 @@ size_t* getListPtr(k);
 /*compute the address of the neighbor block*/
 #define PREV_BLKP(bp) ((char *)(bp) - GET_BLOCK_SIZE((char *)(bp) - DSIZE))
 #define NEXT_BLKP(bp) ((char *)(bp) + GET_BLOCK_SIZE((char *)(bp) - WSIZE))
+
+
+/**
+ * return a pointer to the linked list in the list array.
+ * this function also checks the size.
+ * return NULL if k is illegal
+ */
+static size_t* getListPtr(size_t size) {
+    if (k == 0 || k > 13)
+        return NULL;
+}
+
+
+
+/* 
+ * mm_init - initialize the malloc package.
+ */
+int mm_init(void)
+{
+    void *p = mem_sbrk(10 * sizeof(size_t));
+    if (p == (void *) - 1) {
+        return NULL;
+    } else {
+        size_t *array = (size_t*)p;
+        for (int i = 0; i < 10; i++) {
+            array++ = NULL;
+        }
+    }
+
+    return 0;
+}
+
+/* 
+ * mm_malloc - Allocate a block by incrementing the brk pointer.
+ *     Always allocate a block whose size is a multiple of the alignment.
+ */
+void *mm_malloc(size_t size)
+{
+
+}
+
+/*
+ * mm_free - Freeing a block does nothing.
+ */
+void mm_free(void *ptr)
+{
+}
+
+/*
+ * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
+ */
+void *mm_realloc(void *ptr, size_t size)
+{
+
+}
