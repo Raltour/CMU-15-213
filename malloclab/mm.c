@@ -130,10 +130,20 @@ team_t team = {
  * return NULL if k is illegal
  */
 static size_t* getListPtr(size_t size) {
-    if (k == 0 || k > 13)
+    if (size <= 0 || size > 8192)
         return NULL;
-}
 
+    int k = 0;
+    while (size > 1) {
+        size /= 2;
+        k++;
+    }
+    if (k < 4)
+        k = 4;
+    size_t *p = (size_t *)mem_heap_lo();
+    p += (k - 4);
+    return p;
+}
 
 
 /* 
@@ -168,6 +178,7 @@ void *mm_malloc(size_t size)
  */
 void mm_free(void *ptr)
 {
+    
 }
 
 /*
