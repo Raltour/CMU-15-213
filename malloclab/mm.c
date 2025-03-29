@@ -126,20 +126,8 @@ team_t team = {
 
 /**
  * return a pointer to the linked list in the list array.
- * this function also checks the size.
- * return NULL if k is illegal
  */
-static size_t* getListPtr(size_t size) {
-    if (size <= 0 || size > 8192)
-        return NULL;
-
-    int k = 0;
-    while (size > 1) {
-        size /= 2;
-        k++;
-    }
-    if (k < 4)
-        k = 4;
+static size_t* getListPtr(int k) {
     size_t *p = (size_t *)mem_heap_lo();
     p += (k - 4);
     return p;
@@ -149,8 +137,7 @@ static size_t* getListPtr(size_t size) {
 /* 
  * mm_init - initialize the malloc package.
  */
-int mm_init(void)
-{
+int mm_init(void) {
     void *p = mem_sbrk(10 * sizeof(size_t));
     if (p == (void *) - 1) {
         return NULL;
@@ -166,11 +153,22 @@ int mm_init(void)
 
 /* 
  * mm_malloc - Allocate a block by incrementing the brk pointer.
- *     Always allocate a block whose size is a multiple of the alignment.
+ * Always allocate a block whose size is a multiple of the alignment.
+ * this function also checks the size, return NULL if k is illegal
  */
-void *mm_malloc(size_t size)
-{
+void *mm_malloc(size_t size) {
+    if (size <= 0 || size > 8192)
+        return NULL;
 
+    int k = 0;
+    while (size > 1) {
+        size /= 2;
+        k++;
+    }
+    if (k < 4)
+        k = 4;
+
+    size_t p = getListPtr(k);
 }
 
 /*
@@ -178,7 +176,7 @@ void *mm_malloc(size_t size)
  */
 void mm_free(void *ptr)
 {
-    
+
 }
 
 /*
