@@ -110,7 +110,7 @@ team_t team = {
 /*return a pointer to the next block in the free list*/
 #define NEXT_NODE(ptr) ((size_t *)(ptr))
 
-/*get the size in by the ptr to header or footer*/
+/*get the block size by the ptr to header or footer*/
 #define GET_BLOCK_SIZE(ptr) (DEREF((size_t *)(ptr)) & ~0x7)
 
 /*check if alloced by ptr to header or footer*/
@@ -139,9 +139,9 @@ static size_t* getListPtr(int k) {
  * because the free list in the array is used
  * the pointer should point to the next block in the free list
  */
-static void arrayPtrToNext(int k) [
+static void arrayPtrToNext(int k) {
 
-]
+}
 
 /**
  * return the pow, satisfy that
@@ -180,6 +180,20 @@ static size_t *extendHeap(int k) {
  * init the header and the footer according to the k(size = 2 ^ k)
  */
 static void place(size_t * ptr, int k) {
+
+}
+
+/**
+ * 
+ */
+static void* coalesce(void* ptr) {
+    
+}
+
+/**
+ * 
+ */
+static void inserFreeBlock(void* ptr) {
 
 }
 
@@ -239,7 +253,8 @@ void *mm_malloc(size_t size) {
  * mm_free - Freeing a block does nothing.
  */
 void mm_free(void *ptr) {
-
+    void* block_ptr = coalesce(ptr);
+    inserFreeBlock(block_ptr);
 }
 
 /*
