@@ -6,8 +6,10 @@
  * footers.  Blocks are never coalesced or reused. Realloc is
  * implemented directly using mm_malloc and mm_free.
  *
- * NOTE TO STUDENTS: Replace this header comment with your own header
- * comment that gives a high level description of your solution.
+ * Use a Segregated Free Lists, the Segregated Fits.
+ * With Header, Footer, succ to manipulate the neighbor blocks
+ * in order to implements coalesce.
+ * Handle request for memmory between 16 to 8184 bytes.
  */
 #include <stdio.h>
 #include <stdlib.h>
@@ -24,88 +26,103 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "only my self haha",
+    "LMZ-COOL!",
     /* First member's full name */
     "Mingze Li",
     /* First member's email address */
-    "hahahaha@cs.cmu.edu",
+    "WishToBecomeAStudentInCMU@cs.cmu.edu",
     /* Second member's full name (leave blank if none) */
-    " ",
+    "",
     /* Second member's email address (leave blank if none) */
-    " "
+    ""
 };
 
-/* single word (4) or double word (8) alignment */
-#define ALIGNMENT 8
+// /* single word (4) or double word (8) alignment */
+// #define ALIGNMENT 8
 
-/* rounds up to the nearest multiple of ALIGNMENT */
-#define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
+// /* rounds up to the nearest multiple of ALIGNMENT */
+// #define ALIGN(size) (((size) + (ALIGNMENT-1)) & ~0x7)
 
+// #define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
 
-#define SIZE_T_SIZE (ALIGN(sizeof(size_t)))
+// /* 
+//  * mm_init - initialize the malloc package.
+//  */
+// int mm_init(void)
+// {
+//     return 0;
+// }
 
-/* 
- * mm_init - initialize the malloc package.
- */
-int mm_init(void)
-{
-    return 0;
-}
+// /* 
+//  * mm_malloc - Allocate a block by incrementing the brk pointer.
+//  *     Always allocate a block whose size is a multiple of the alignment.
+//  */
+// void *mm_malloc(size_t size)
+// {
+//     int newsize = ALIGN(size + SIZE_T_SIZE);
+//     void *p = mem_sbrk(newsize);
+//     if (p == (void *)-1)
+// 	return NULL;
+//     else {
+//         *(size_t *)p = size;
+//         return (void *)((char *)p + SIZE_T_SIZE);
+//     }
+// }
 
-/* 
- * mm_malloc - Allocate a block by incrementing the brk pointer.
- *     Always allocate a block whose size is a multiple of the alignment.
- */
-void *mm_malloc(size_t size)
-{
-    printf("%d\n%d\n", sizeof(size_t), SIZE_T_SIZE);
-    int newsize = ALIGN(size + SIZE_T_SIZE);
-    void *p = mem_sbrk(newsize);
-    if (p == (void *)-1)
-	return NULL;
-    else {
-        *(size_t *)p = size;
-        return (void *)((char *)p + SIZE_T_SIZE);
-    }
-}
+// /*
+//  * mm_free - Freeing a block does nothing.
+//  */
+// void mm_free(void *ptr)
+// {
+// }
 
-/*
- * mm_free - Freeing a block does nothing.
- */
-void mm_free(void *ptr)
-{
-}
-
-/*
- * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
- */
-void *mm_realloc(void *ptr, size_t size)
-{
-    void *oldptr = ptr;
-    void *newptr;
-    size_t copySize;
+// /*
+//  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
+//  */
+// void *mm_realloc(void *ptr, size_t size)
+// {
+//     void *oldptr = ptr;
+//     void *newptr;
+//     size_t copySize;
     
-    newptr = mm_malloc(size);
-    if (newptr == NULL)
-      return NULL;
-    copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
-    if (size < copySize)
-      copySize = size;
-    memcpy(newptr, oldptr, copySize);
-    mm_free(oldptr);
-    return newptr;
-}
+//     newptr = mm_malloc(size);
+//     if (newptr == NULL)
+//       return NULL;
+//     copySize = *(size_t *)((char *)oldptr - SIZE_T_SIZE);
+//     if (size < copySize)
+//       copySize = size;
+//     memcpy(newptr, oldptr, copySize);
+//     mm_free(oldptr);
+//     return newptr;
+// }
 
+/*word size and double word size*/
+#define WSIZE 4
+#define DSIZE 8
 
+/*get the size_t number in the address ptr*/
+#define DEREF(ptr) (*(unsigned int *)(ptr))
 
+/*put the number val to the address ptr*/
+#define PUT(ptr, val) (DEREF(ptr) == (val))
 
+/*return a pointer to the linked list
+combined with blocks of size 2 ^ k class in the list array*/
+size_t* getListPtr(k);
 
+/*return a pointer to the next block in the free list*/
+#define NEXT_NODE(ptr) ((size_t *)(ptr))
 
+/*get the size in by the ptr to header or footer*/
+#define GET_BLOCK_SIZE(ptr) (DEREF((size_t *)(ptr)) & ~0x7)
 
+/*check if alloced by ptr to header or footer*/
+#define IS_ALLOCED(ptr) (DEREF((size_t *)(ptr)) & 0x1)
 
+/*compute the address of the header and footer of the block*/
+#define HEADER(bp) ((size_t *)(bp) - 1)
+#define FOOTER(bp) ((char *)(bp) + GET_BLOCK_SIZE((char *)(bp) - WSIZE) - DSIZE)
 
-
-
-
-
-
+/*compute the address of the neighbor block*/
+#define PREV_BLKP(bp) ((char *)(bp) - GET_BLOCK_SIZE((char *)(bp) - DSIZE))
+#define NEXT_BLKP(bp) ((char *)(bp) + GET_BLOCK_SIZE((char *)(bp) - WSIZE))
