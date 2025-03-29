@@ -136,6 +136,14 @@ static size_t* getListPtr(int k) {
 }
 
 /**
+ * because the free list in the array is used
+ * the pointer should point to the next block in the free list
+ */
+static void arrayPtrToNext(int k) [
+
+]
+
+/**
  * return the pow, satisfy that
  * 2 ^ k >= payload(size here) + 8(overhead)
  */
@@ -204,17 +212,16 @@ void *mm_malloc(size_t size) {
         return NULL;
 
     int k = adjustSize(size);
-
-    size_t* p = getListPtr(k);
     int temp_k = k;
 
     size_t* block = NULL;
     while (k < 14) {
-        if (p == NULL) {
-            p++;
+        block = getList(k);
+        if (block == NULL) {
             k++;
         } else {
             block = splitBlock(p, temp_k);
+            arrayPtrToNext(k);
             break;
         }
     }
@@ -231,15 +238,13 @@ void *mm_malloc(size_t size) {
 /*
  * mm_free - Freeing a block does nothing.
  */
-void mm_free(void *ptr)
-{
+void mm_free(void *ptr) {
 
 }
 
 /*
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
  */
-void *mm_realloc(void *ptr, size_t size)
-{
+void *mm_realloc(void *ptr, size_t size) {
 
 }
