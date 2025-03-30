@@ -140,7 +140,9 @@ static size_t* getListPtr(int k) {
  * the pointer should point to the next block in the free list
  */
 static void arrayPtrToNext(int k) {
-
+    size_t *p = (size_t *)mem_heap_lo();
+    p += (k - 4);
+    *p = NEXT_NODE(p)
 }
 
 /**
