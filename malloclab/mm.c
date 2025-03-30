@@ -105,7 +105,7 @@ team_t team = {
 #define DEREF(ptr) (*(unsigned int *)(ptr))
 
 /*put the number val to the address ptr*/
-#define PUT(ptr, val) (DEREF(ptr) == (val))
+#define PUT(ptr, val) (DEREF((size_t *)(ptr)) == (val))
 
 /*return a pointer to the next block in the free list*/
 #define NEXT_NODE(ptr) (*(size_t *)(ptr))
@@ -222,7 +222,7 @@ static int ln2(int x) {
 }
 
 /**
- * return a pointer to the linked list in the list array.
+ * return a pointer to the right position in the list array.
  */
 static size_t* getListPtr(int k) {
     size_t *p = (size_t *)mem_heap_lo();
@@ -237,7 +237,7 @@ static size_t* getListPtr(int k) {
 static void arrayPtrToNext(int k) {
     size_t *p = (size_t *)mem_heap_lo();
     p += (k - 4);
-    *p = NEXT_NODE(*p);
+    PUT(p, NEXT_NODE(DEREF(P)));
 }
 
 /**
@@ -283,6 +283,8 @@ static size_t *extendHeap(int k) {
  * init the header and the footer according to the k(size = 2 ^ k)
  * set the state to show weather the block is allocated or free
  * if the block is free, set the pointer to the next free block
+ * if the size of the free block equal to 8 bytes, just leave it alone with set the pointer to next
+ * waiting for coalesce
  */
 static void place(size_t * ptr, int k, int state) {
 
