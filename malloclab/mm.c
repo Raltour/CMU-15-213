@@ -26,9 +26,9 @@
  ********************************************************/
 team_t team = {
     /* Team name */
-    "LMZ-COOL!",
+    "COOL!",
     /* First member's full name */
-    "Mingze Li",
+    "HAHAHA",
     /* First member's email address */
     "WishToBecomeAStudentInCMU@cs.cmu.edu",
     /* Second member's full name (leave blank if none) */
@@ -166,13 +166,22 @@ void *mm_realloc(void *ptr, size_t size) {
 /**
  * return log(2)(x)
  */
+// static int ln2(int x) {
+//     int k = 0;
+//     while (x > 1) {
+//         x /= 2;
+//         k++;
+//     }
+
+//     return k;
+// }
 static int ln2(int x) {
     int k = 0;
-    while (x > 1) {
-        x /= 2;
+    int size = 1;
+    while (size < x) {
+        size <<= 1;
         k++;
     }
-
     return k;
 }
 
@@ -276,17 +285,17 @@ static void* coalesce(void* ptr) {
         next = 1;//just ignore the area over the heap
     }
     if (prev && next) {
-        return ptr;
+        return place((size_t*)(ptr), ln2(GET_BLOCK_SIZE(HEADER(ptr))), 0);
     } else if (!prev && next){
         int prev_size = GET_BLOCK_SIZE(ptr - DSIZE);
-        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(ptr) + prev_size), 0);
+        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(HEADER(ptr)) + prev_size), 0);
     } else if (prev && !next) {
         int next_size = GET_BLOCK_SIZE(ptr +GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE);
         return place((size_t*)(ptr), ln2(GET_BLOCK_SIZE(ptr) + next_size), 0);
     } else {
         int prev_size = GET_BLOCK_SIZE(ptr - DSIZE);
         int next_size = GET_BLOCK_SIZE(ptr +GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE);
-        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(ptr) + prev_size + next_size), 0);
+        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(HEADER(ptr)) + prev_size + next_size), 0);
     }
 }
 
