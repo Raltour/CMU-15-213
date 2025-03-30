@@ -96,8 +96,7 @@ static void inserFreeBlock(void* ptr);
 int mm_init(void) {
     void *p = mem_sbrk(10 * sizeof(size_t));
     if (p == (void *) - 1) {
-        printf("init fail\n");
-        exit(-1);
+        return 0;
     } else {
         size_t *array = (size_t*)p;
         for (int i = 0; i < 10; i++) {
