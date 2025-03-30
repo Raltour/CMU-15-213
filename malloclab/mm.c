@@ -226,8 +226,9 @@ static size_t *extendHeap(int k) {
  * init the header and the footer according to the k(size = 2 ^ k)
  * set the state to show weather the block is allocated or free
  * if the block is free, set the pointer to the next free block
+ * return the block pointer
  */
-static void place(size_t * ptr, int k, int state) {
+static void* place(size_t * ptr, int k, int state) {
     if (state) {
         PUT((ptr - 1), pow(2, k) & 0x1);
         PUT((ptr + k - 2), pow(2, k) & 0x1);
@@ -236,13 +237,28 @@ static void place(size_t * ptr, int k, int state) {
         PUT((ptr + k - 2), pow(2, k));
         PUT((ptr), DEREF(getListPtr(k)));
     }
+    return (void*)ptr;
 }
 
 /**
  * 
  */
 static void* coalesce(void* ptr) {
-
+    int prev = IS_ALLOCED(ptr - DSIZE);
+    int next = IS_ALLOCED(ptr + GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE);
+    if (prev && next) {
+        return ptr;
+    } else if (!prev && next){
+        int prev_size = GET_BLOCK_SIZE(ptr - DSIZE);
+        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(ptr)) + ln2(prev_size), 0);
+    } else if (prev && !next) {
+        int next_size = GET_BLOCK_SIZE(ptr +GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE);
+        return place((size_t*)(ptr), ln2(GET_BLOCK_SIZE(ptr)) + ln2(next_size), 0);
+    } else {
+        int prev_size = GET_BLOCK_SIZE(ptr - DSIZE);
+        int next_size = GET_BLOCK_SIZE(ptr +GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE);
+        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(ptr)) + ln2(prev_size) + ln2(next_size), 0);
+    }
 }
 
 /**
