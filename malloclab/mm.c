@@ -125,7 +125,6 @@ void *mm_malloc(size_t size) {
             k++;
         } else {
             arrayPtrToNext(k);
-            block = splitBlock(block, temp_k);
             break;
         }
     }
@@ -133,6 +132,7 @@ void *mm_malloc(size_t size) {
         block = extendHeap(temp_k);
     }
 
+    block = splitBlock(block, temp_k);
     return (void *)block;
 }
 
@@ -219,7 +219,7 @@ static size_t* splitBlock(size_t* ptr, int k) {
  * size = 2 ^ k
  */
 static size_t *extendHeap(int k) {
-
+    return (size_t*)mem_sbrk(pow(2, k));
 }
 
 /**
