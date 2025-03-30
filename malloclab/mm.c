@@ -242,14 +242,17 @@ static void place(size_t * ptr, int k, int state) {
  * 
  */
 static void* coalesce(void* ptr) {
-    
+
 }
 
 /**
- * 
+ * insert the free block back to the array of free list.
  */
 static void inserFreeBlock(void* ptr) {
-
+    int size = GET_BLOCK_SIZE(ptr);
+    int k = ln2(size);
+    PUT(ptr, *getListPtr(k));
+    PUT(getListPtr(k), (size_t*)ptr);
 }
 
 
