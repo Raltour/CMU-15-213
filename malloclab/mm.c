@@ -106,6 +106,10 @@ int mm_init(void) {
         }
     }
 
+    mem_sbrk(4);
+    // void* next = mem_heap_hi() + 1;
+    // int incr = ((int)(next + 7) & ~0x7) - (int)next;
+    // mem_sbrk(incr);
     return 0;
 }
 
@@ -124,18 +128,21 @@ void *mm_malloc(size_t size) {
     size_t* block = NULL;
     while (k < 14) {
         block = getListPtr(k);
-        if (block == NULL) {
+        if (*block == 0) {
             k++;
         } else {
+            block = (size_t*)(*block);
             arrayPtrToNext(k);
+            block = splitBlock(block, temp_k);
             break;
         }
     }
     if (k == 14) {
         block = extendHeap(temp_k);
+        block++;
+        place(block, temp_k, 1);
     }
 
-    block = splitBlock(block, temp_k);
     return (void *)block;
 }
 
@@ -246,8 +253,8 @@ static size_t *extendHeap(int k) {
  */
 static void* place(size_t * ptr, int k, int state) {
     if (state) {
-        PUT((ptr - 1), pow2(k) & 0x1);
-        PUT((ptr + k - 2), pow2(k) & 0x1);
+        PUT((ptr - 1), pow2(k) | 0x1);
+        PUT((ptr + k - 2), pow2(k) | 0x1);
     } else {
         PUT((ptr - 1), pow2(k));
         PUT((ptr + k - 2), pow2(k));
@@ -262,18 +269,24 @@ static void* place(size_t * ptr, int k, int state) {
 static void* coalesce(void* ptr) {
     int prev = IS_ALLOCED(ptr - DSIZE);
     int next = IS_ALLOCED(ptr + GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE);
+    if (ptr - DSIZE < mem_heap_lo() + 44) {
+        prev = 1;
+    }
+    if (ptr + GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE > mem_heap_hi()) {
+        next = 1;//just ignore the area over the heap
+    }
     if (prev && next) {
         return ptr;
     } else if (!prev && next){
         int prev_size = GET_BLOCK_SIZE(ptr - DSIZE);
-        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(ptr)) + ln2(prev_size), 0);
+        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(ptr) + prev_size), 0);
     } else if (prev && !next) {
         int next_size = GET_BLOCK_SIZE(ptr +GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE);
-        return place((size_t*)(ptr), ln2(GET_BLOCK_SIZE(ptr)) + ln2(next_size), 0);
+        return place((size_t*)(ptr), ln2(GET_BLOCK_SIZE(ptr) + next_size), 0);
     } else {
         int prev_size = GET_BLOCK_SIZE(ptr - DSIZE);
         int next_size = GET_BLOCK_SIZE(ptr +GET_BLOCK_SIZE(ptr - WSIZE) - WSIZE);
-        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(ptr)) + ln2(prev_size) + ln2(next_size), 0);
+        return place((size_t*)(ptr - prev_size), ln2(GET_BLOCK_SIZE(ptr) + prev_size + next_size), 0);
     }
 }
 
