@@ -108,7 +108,7 @@ team_t team = {
 #define PUT(ptr, val) (DEREF(ptr) == (val))
 
 /*return a pointer to the next block in the free list*/
-#define NEXT_NODE(ptr) ((size_t *)(ptr))
+#define NEXT_NODE(ptr) (*(size_t *)(ptr))
 
 /*get the block size by the ptr to header or footer*/
 #define GET_BLOCK_SIZE(ptr) (DEREF((size_t *)(ptr)) & ~0x7)
@@ -126,78 +126,21 @@ team_t team = {
 
 
 
-/**
- * return a pointer to the linked list in the list array.
- */
-static size_t* getListPtr(int k) {
-    size_t *p = (size_t *)mem_heap_lo();
-    p += (k - 4);
-    return p;
-}
+static size_t* getListPtr(int k);
 
-/**
- * because the free list in the array is used
- * the pointer should point to the next block in the free list
- */
-static void arrayPtrToNext(int k) {
-    size_t *p = (size_t *)mem_heap_lo();
-    p += (k - 4);
-    *p = NEXT_NODE(p)
-}
+static void arrayPtrToNext(int k);
 
-/**
- * return the pow, satisfy that
- * 2 ^ k >= payload(size here) + 8(overhead)
- */
-static int adjustSize(int size) {
-    int k = 0;
-    size += 8;
-    while (size > 1) {
-        size /= 2;
-        k++;
-    }
-    if (k < 4)
-        k = 4;
-    return k;
-}
+static int adjustSize(int size);
 
-/**
- * return the pointer to the block used to malloc.
- * split the original block to meet the size.
- * the leaved block(if exist)
- */
-static size_t* splitBlock(size_t* ptr, int k) {
-    return ptr;
-}
+static size_t* splitBlock(size_t* ptr, int k);
 
-/**
- * get more heap memmory for malloc.
- * size = 2 ^ k
- */
-static size_t *extendHeap(int k) {
+static size_t *extendHeap(int k);
 
-}
+static void place(size_t * ptr, int k, int state);
 
-/**
- * init the header and the footer according to the k(size = 2 ^ k)
- */
-static void place(size_t * ptr, int k) {
+static void* coalesce(void* ptr);
 
-}
-
-/**
- * 
- */
-static void* coalesce(void* ptr) {
-    
-}
-
-/**
- * 
- */
-static void inserFreeBlock(void* ptr) {
-
-}
+static void inserFreeBlock(void* ptr);
 
 
 
@@ -232,11 +175,11 @@ void *mm_malloc(size_t size) {
 
     size_t* block = NULL;
     while (k < 14) {
-        block = getList(k);
+        block = getListPtr(k);
         if (block == NULL) {
             k++;
         } else {
-            block = splitBlock(p, temp_k);
+            block = splitBlock(block, temp_k);
             arrayPtrToNext(k);
             break;
         }
@@ -245,9 +188,6 @@ void *mm_malloc(size_t size) {
         block = extendHeap(temp_k);
     }
 
-    place(block, k);
-
-    block += 1;
     return (void *)block;
 }
 
@@ -263,5 +203,95 @@ void mm_free(void *ptr) {
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
  */
 void *mm_realloc(void *ptr, size_t size) {
+
+}
+
+
+
+/**
+ * return a pointer to the linked list in the list array.
+ */
+static size_t* getListPtr(int k) {
+    size_t *p = (size_t *)mem_heap_lo();
+    p += (k - 4);
+    return p;
+}
+
+/**
+ * because the free list in the array is used
+ * the pointer should point to the next block in the free list
+ */
+static void arrayPtrToNext(int k) {
+    size_t *p = (size_t *)mem_heap_lo();
+    p += (k - 4);
+    *p = NEXT_NODE(*p);
+}
+
+/**
+ * return the pow, satisfy that
+ * 2 ^ k >= payload(size here) + 8(overhead)
+ */
+static int adjustSize(int size) {
+    int k = 0;
+    size += 8;
+    while (size > 1) {
+        size /= 2;
+        k++;
+    }
+    if (k < 4)
+        k = 4;
+    return k;
+}
+
+/**
+ * get the ponter to the right position in the array and the size we need.
+ * return the pointer to the block used to malloc.
+ * (not to the header, to the start of the malloc memorry)
+ * split the original block to meet the size.
+ * the leaved block(if exist)
+ */
+static size_t* splitBlock(size_t* ptr, int k) {
+    int block_size = GET_BLOCK_SIZE(*ptr - WSIZE);
+    int ac_size = pow(10, k);
+    if (block_size != ac_size) {
+        int block_k = 0;
+        while (block_size > 1) {
+            block_size /= 2;
+            block_k++;
+        }     
+        place(ptr + k, block_k - k, 0);
+    }     
+
+    place(*ptr, k, 1);
+
+    return *ptr;
+}
+
+/**
+ * get more heap memmory for malloc.
+ * size = 2 ^ k
+ */
+static size_t *extendHeap(int k) {
+
+}
+
+/**
+ * init the header and the footer according to the k(size = 2 ^ k)
+ */
+static void place(size_t * ptr, int k, int state) {
+
+}
+
+/**
+ * 
+ */
+static void* coalesce(void* ptr) {
+    
+}
+
+/**
+ * 
+ */
+static void inserFreeBlock(void* ptr) {
 
 }
