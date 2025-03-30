@@ -16,7 +16,6 @@
 #include <assert.h>
 #include <unistd.h>
 #include <string.h>
-#include <math.h>
 
 #include "mm.h"
 #include "memlib.h"
@@ -48,7 +47,7 @@ team_t team = {
 #define DEREF(ptr) (*(unsigned int *)(ptr))
 
 /*put the number val to the address ptr*/
-#define PUT(ptr, val) (DEREF((size_t *)(ptr)) == (val))
+#define PUT(ptr, val) ((DEREF(ptr)) = (val))
 
 /*return a pointer to the next block in the free list*/
 #define NEXT_NODE(ptr) (*(size_t *)(ptr))
@@ -71,6 +70,8 @@ team_t team = {
 
 static int ln2(int x);
 
+static int pow2(int x);
+
 static size_t* getListPtr(int k);
 
 static void arrayPtrToNext(int k);
@@ -81,7 +82,7 @@ static size_t* splitBlock(size_t* ptr, int k);
 
 static size_t *extendHeap(int k);
 
-static void place(size_t * ptr, int k, int state);
+static void* place(size_t * ptr, int k, int state);
 
 static void* coalesce(void* ptr);
 
@@ -95,11 +96,13 @@ static void inserFreeBlock(void* ptr);
 int mm_init(void) {
     void *p = mem_sbrk(10 * sizeof(size_t));
     if (p == (void *) - 1) {
-        return NULL;
+        printf("init fail\n");
+        exit(-1);
     } else {
         size_t *array = (size_t*)p;
         for (int i = 0; i < 10; i++) {
-            array++ = NULL;
+            *array = 0;
+            array++;
         }
     }
 
@@ -148,7 +151,7 @@ void mm_free(void *ptr) {
  * mm_realloc - Implemented simply in terms of mm_malloc and mm_free
  */
 void *mm_realloc(void *ptr, size_t size) {
-
+    return NULL;
 }
 
 
@@ -162,6 +165,19 @@ static int ln2(int x) {
         x /= 2;
         k++;
     }
+
+    return k;
+}
+
+/**
+ * return 2 ^ x
+ */
+static int pow2(int x) {
+    int num = 1;
+    for (int i = 0; i < x; i++) {
+        num *= 2;
+    }
+    return num;
 }
 
 /**
@@ -180,7 +196,7 @@ static size_t* getListPtr(int k) {
 static void arrayPtrToNext(int k) {
     size_t *p = (size_t *)mem_heap_lo();
     p += (k - 4);
-    PUT(p, NEXT_NODE(DEREF(P)));
+    PUT(p, NEXT_NODE(DEREF(p)));
 }
 
 /**
@@ -209,9 +225,9 @@ static size_t* splitBlock(size_t* ptr, int k) {
         place(ptr + k, block_k - k, 0);
     }
 
-    place(*ptr, k, 1);
+    place((size_t*)(*ptr), k, 1);
 
-    return *ptr;
+    return (size_t*)(*ptr);
 }
 
 /**
@@ -219,7 +235,7 @@ static size_t* splitBlock(size_t* ptr, int k) {
  * size = 2 ^ k
  */
 static size_t *extendHeap(int k) {
-    return (size_t*)mem_sbrk(pow(2, k));
+    return (size_t*)mem_sbrk(pow2(k));
 }
 
 /**
@@ -230,18 +246,18 @@ static size_t *extendHeap(int k) {
  */
 static void* place(size_t * ptr, int k, int state) {
     if (state) {
-        PUT((ptr - 1), pow(2, k) & 0x1);
-        PUT((ptr + k - 2), pow(2, k) & 0x1);
+        PUT((ptr - 1), pow2(k) & 0x1);
+        PUT((ptr + k - 2), pow2(k) & 0x1);
     } else {
-        PUT((ptr - 1), pow(2, k));
-        PUT((ptr + k - 2), pow(2, k));
+        PUT((ptr - 1), pow2(k));
+        PUT((ptr + k - 2), pow2(k));
         PUT((ptr), DEREF(getListPtr(k)));
     }
     return (void*)ptr;
 }
 
 /**
- * 
+ * merge the free blocks
  */
 static void* coalesce(void* ptr) {
     int prev = IS_ALLOCED(ptr - DSIZE);
