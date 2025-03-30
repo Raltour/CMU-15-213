@@ -126,6 +126,8 @@ team_t team = {
 
 
 
+static int ln2(int x);
+
 static size_t* getListPtr(int k);
 
 static void arrayPtrToNext(int k);
@@ -209,6 +211,17 @@ void *mm_realloc(void *ptr, size_t size) {
 
 
 /**
+ * return log(2)(x)
+ */
+static int ln2(int x) {
+    int k = 0;
+    while (x > 1) {
+        x /= 2;
+        k++;
+    }
+}
+
+/**
  * return a pointer to the linked list in the list array.
  */
 static size_t* getListPtr(int k) {
@@ -232,12 +245,8 @@ static void arrayPtrToNext(int k) {
  * 2 ^ k >= payload(size here) + 8(overhead)
  */
 static int adjustSize(int size) {
-    int k = 0;
     size += 8;
-    while (size > 1) {
-        size /= 2;
-        k++;
-    }
+    int k = ln2(size);
     if (k < 4)
         k = 4;
     return k;
@@ -252,15 +261,10 @@ static int adjustSize(int size) {
  */
 static size_t* splitBlock(size_t* ptr, int k) {
     int block_size = GET_BLOCK_SIZE(*ptr - WSIZE);
-    int ac_size = pow(10, k);
-    if (block_size != ac_size) {
-        int block_k = 0;
-        while (block_size > 1) {
-            block_size /= 2;
-            block_k++;
-        }     
+    int block_k = ln2(block_size);
+    if (block_k != k) {
         place(ptr + k, block_k - k, 0);
-    }     
+    }
 
     place(*ptr, k, 1);
 
@@ -277,6 +281,8 @@ static size_t *extendHeap(int k) {
 
 /**
  * init the header and the footer according to the k(size = 2 ^ k)
+ * set the state to show weather the block is allocated or free
+ * if the block is free, set the pointer to the next free block
  */
 static void place(size_t * ptr, int k, int state) {
 
