@@ -1,10 +1,10 @@
 all: echoclient echoserver
 
 echoclient: echoclient.o csapp.o
-	gcc -O2 -o echoclient echoclient.o csapp.o
+	gcc -O2 -o echoclient echoclient.o csapp.o -lpthread
 
 echoserver: echoserver.o echo.o csapp.o
-	gcc -O2 -o echoserver echoserver.o echo.o csapp.o
+	gcc -O2 -o echoserver echoserver.o echo.o csapp.o -lpthread
 
 echoclient.o: echoclient.c
 	gcc -O2 -c echoclient.c
