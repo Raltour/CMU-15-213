@@ -5,17 +5,15 @@
 #define MAX_CACHE_SIZE 1049000
 #define MAX_OBJECT_SIZE 102400
 
-#define MAXLINE 1024
-
 /* You won't lose style points for including this long line in your code */
 static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:10.0.3) Gecko/20120305 Firefox/10.0.3\r\n";
-
 
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
 int parse_uri(char *uri, char *filename, char *cgiargs);
 void get_filetype(char *filename, char *filetype);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
+int connect_to_server(char *buf, char *host, char *port);
 
 int main(int argc, char **argv)
 {
@@ -46,26 +44,80 @@ int main(int argc, char **argv)
 /* $begin doit */
 void doit(int fd)
 {
-    struct stat sbuf;
-    char buf[MAXLINE], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
-    char filename[MAXLINE], cgiargs[MAXLINE];
+    char buf[MAXBUF], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
+    char filename[MAXLINE];
     rio_t rio;
+    char host[MAXLINE], port[MAXLINE];
 
     /* Read request line and headers */
     Rio_readinitb(&rio, fd);
-    if (!Rio_readlineb(&rio, buf, MAXLINE))  //line:netp:doit:readrequest
+    if (!Rio_readlineb(&rio, buf, MAXLINE))
         return;
     printf("%s", buf);
-    sscanf(buf, "%s %s %s", method, uri, version);       //line:netp:doit:parserequest
-    if (strcasecmp(method, "GET")) {                     //line:netp:doit:beginrequesterr
+    sscanf(buf, "%s %s %s", method, uri, version);
+    if (strcasecmp(method, "GET")) {
         clienterror(fd, method, "501", "Not Implemented",
-                    "Tiny does not implement this method");
+                    "Server does not implement this method");
         return;
-    }                                                    //line:netp:doit:endrequesterr
-    read_requesthdrs(&rio);                              //line:netp:doit:readrequesthdrs
+    }
+    read_requesthdrs(&rio);
 
     /* Parse URI from GET request */
-    is_static = parse_uri(uri, filename, cgiargs);       //line:netp:doit:staticcheck//line:netp:doit:endnotfound
+    if (parse_uri(uri, filename, buf)) {
+        if (connect_to_server(buf, host, port)) {
+            Rio_writen(fd, buf, strlen(buf));
+        } else {
+            printf("Connection to server failed\n");
+        }
+    } else {
+        printf("Request is not valid");
+    }
+}
 
 
+/*
+ * parse_uri - parse URI
+ * return whether the request is valid
+ */
+int parse_uri(char *uri, char *filename, char *cgiargs)
+{
+    char *ptr;
+
+    if (!strstr(uri, "cgi-bin")) {
+        strcpy(cgiargs, "");
+        strcpy(filename, ".");
+        strcat(filename, uri);
+        if (uri[strlen(uri)-1] == '/')
+            strcat(filename, "home.html");
+        return 1;
+    }
+    else {  /* Dynamic content */
+        ptr = index(uri, '?');
+        if (ptr) {
+            strcpy(cgiargs, ptr+1);
+            *ptr = '\0';
+        }
+        else
+            strcpy(cgiargs, "");
+        strcpy(filename, ".");
+        strcat(filename, uri);
+        return 0;
+    }
+}
+
+int connect_to_server(char *buf, char *host, char *port) {
+    int clientfd;
+    rio_t rio;
+
+    clientfd = Open_clientfd(host, port);
+    Rio_readinitb(&rio, clientfd);
+
+    if (Fgets(buf, MAXBUF, clientfd) != NULL) {
+        Rio_writen(clientfd, buf, strlen(buf));
+        Rio_readlineb(&rio, buf, MAXBUF);
+        Close(clientfd);
+        return 1;
+    }
+    Close(clientfd);
+    return 0;
 }
