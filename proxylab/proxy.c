@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "csapp.h"
 
 /* Recommended max cache and object sizes */
@@ -10,10 +11,12 @@ static const char *user_agent_hdr = "User-Agent: Mozilla/5.0 (X11; Linux x86_64;
 
 void doit(int fd);
 void read_requesthdrs(rio_t *rp);
-int parse_uri(char *uri, char *filename, char *cgiargs);
+int parse_uri(char *uri, char *hostname, char *path, char *server_port);
 void get_filetype(char *filename, char *filetype);
 void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg);
 int connect_to_server(char *buf, char *host, char *port);
+void buil_request(char *buf, char *method, char *hostname, char *path);
+
 
 int main(int argc, char **argv)
 {
@@ -41,13 +44,15 @@ int main(int argc, char **argv)
     }
 }
 
-/* $begin doit */
+
 void doit(int fd)
 {
     char buf[MAXBUF], method[MAXLINE], uri[MAXLINE], version[MAXLINE];
-    char filename[MAXLINE];
+    char hostname[MAXLINE];
+    char path[MAXLINE];
     rio_t rio;
-    char host[MAXLINE], port[MAXLINE];
+    char server_port[MAXLINE];
+    //不太清楚这里的端口号怎么获取，可能是自己指定的？
 
     /* Read request line and headers */
     Rio_readinitb(&rio, fd);
@@ -55,7 +60,7 @@ void doit(int fd)
         return;
     printf("%s", buf);
     sscanf(buf, "%s %s %s", method, uri, version);
-    if (strcasecmp(method, "GET")) {
+    if (strcmp(method, "GET") != 0) {
         clienterror(fd, method, "501", "Not Implemented",
                     "Server does not implement this method");
         return;
@@ -63,8 +68,9 @@ void doit(int fd)
     read_requesthdrs(&rio);
 
     /* Parse URI from GET request */
-    if (parse_uri(uri, filename, buf)) {
-        if (connect_to_server(buf, host, port)) {
+    if (parse_uri(uri, hostname, path, server_port) >= 0) {
+        buil_request(buf, method, hostname, path);
+        if (connect_to_server(buf, hostname, server_port)) {
             Rio_writen(fd, buf, strlen(buf));
         } else {
             printf("Connection to server failed\n");
@@ -76,48 +82,100 @@ void doit(int fd)
 
 
 /*
- * parse_uri - parse URI
+ * parse_uri - parse URI to the hostname, path to the file
  * return whether the request is valid
+ * for example: http://www.cmu.edu/hub/index.html or /hub/index.html
  */
-int parse_uri(char *uri, char *filename, char *cgiargs)
-{
-    char *ptr;
+int parse_uri(char *uri, char *hostname, char *path, char *server_port) {
+    if (strncmp(uri, "http://", strlen("http://")) == 0) {
+        uri += strlen("http://");
+        char *ptr1 = strchr(uri, ':');
+        char *ptr2 = strchr(uri, '/');
 
-    if (!strstr(uri, "cgi-bin")) {
-        strcpy(cgiargs, "");
-        strcpy(filename, ".");
-        strcat(filename, uri);
-        if (uri[strlen(uri)-1] == '/')
-            strcat(filename, "home.html");
-        return 1;
-    }
-    else {  /* Dynamic content */
-        ptr = index(uri, '?');
-        if (ptr) {
-            strcpy(cgiargs, ptr+1);
-            *ptr = '\0';
+        if (ptr2 != NULL) {
+            if (ptr1 == NULL) {
+                strncpy(hostname, uri, ptr2 - uri);
+                strcpy(server_port, "4500");
+            } else {
+                strncpy(server_port, ptr1 + 1, ptr2 - (ptr1 + 1));
+                strncpy(hostname, ptr1, ptr1 - uri);
+            }
+            strncpy(path, ptr2, MAXLINE);
+        } else {
+            return -1;
         }
-        else
-            strcpy(cgiargs, "");
-        strcpy(filename, ".");
-        strcat(filename, uri);
-        return 0;
+    } else {
+        strcpy(hostname, "localhost");
     }
+
+    return 1;
 }
 
-int connect_to_server(char *buf, char *host, char *port) {
+
+int connect_to_server(char *buf, char *host, char *server_port) {
     int clientfd;
     rio_t rio;
 
-    clientfd = Open_clientfd(host, port);
+    if ((clientfd = Open_clientfd(host, server_port)) < 0) {
+        return 0;
+    }
     Rio_readinitb(&rio, clientfd);
 
-    if (Fgets(buf, MAXBUF, clientfd) != NULL) {
-        Rio_writen(clientfd, buf, strlen(buf));
-        Rio_readlineb(&rio, buf, MAXBUF);
-        Close(clientfd);
-        return 1;
-    }
+    Rio_writen(clientfd, buf, strlen(buf));
+    Rio_readn(clientfd, buf, MAXBUF);
+
     Close(clientfd);
-    return 0;
+    return 1;
+}
+
+
+/*
+ * clienterror - returns an error message to the client
+ */
+void clienterror(int fd, char *cause, char *errnum, char *shortmsg, char *longmsg) {
+    char buf[MAXLINE];
+
+    /* Print the HTTP response headers */
+    sprintf(buf, "HTTP/1.0 %s %s\r\n", errnum, shortmsg);
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "Content-type: text/html\r\n\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+
+    /* Print the HTTP response body */
+    sprintf(buf, "<html><title>Tiny Error</title>");
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "<body bgcolor=""ffffff"">\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "%s: %s\r\n", errnum, shortmsg);
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "<p>%s: %s\r\n", longmsg, cause);
+    Rio_writen(fd, buf, strlen(buf));
+    sprintf(buf, "<hr><em>The Tiny Web server</em>\r\n");
+    Rio_writen(fd, buf, strlen(buf));
+}
+
+
+/*
+ * read_requesthdrs - read HTTP request headers
+ */
+void read_requesthdrs(rio_t *rp)
+{
+    char buf[MAXLINE];
+
+    Rio_readlineb(rp, buf, MAXLINE);
+    printf("%s", buf);
+    while(strcmp(buf, "\r\n")) {
+        Rio_readlineb(rp, buf, MAXLINE);
+        printf("%s", buf);
+    }
+}
+
+
+void buil_request(char *buf, char *method, char *hostname, char *path) {
+    sprintf(buf, "GET %s HTTP/1.0\r\n", path);
+    sprintf(buf + strlen(buf), "Host: %s\r\n", hostname);
+    sprintf(buf + strlen(buf), "%s", user_agent_hdr);
+    sprintf(buf + strlen(buf), "Connection: close\r\n");
+    sprintf(buf + strlen(buf), "Proxy-Connection: close\r\n");
+    strcat(buf, "\r\n");
 }
