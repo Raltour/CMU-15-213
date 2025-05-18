@@ -8,7 +8,7 @@
 
 #define STRING_LENGTH 1024
 
-FILE *outfile = NULL;
+FILE *outfile;
 int max_column = 80;
 int first_indent = 4;
 int other_indents = 2;

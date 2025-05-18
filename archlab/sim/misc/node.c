@@ -34,7 +34,7 @@ int arg_cnt = 0;
 #endif
 
 
-extern FILE *outfile;
+FILE *outfile;
 
 /*
  * usage - print helpful diagnostic information

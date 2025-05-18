@@ -38,7 +38,7 @@ yis: yis.o isa.o
 	$(CC) $(CFLAGS) yis.o isa.o -o yis
 
 hcl2c: hcl.tab.c lex.yy.c node.c outgen.c
-	$(CC) $(LCFLAGS) node.c lex.yy.c hcl.tab.c outgen.c -o hcl2c
+	$(CC) $(LCFLAGS) -fcommon node.c lex.yy.c hcl.tab.c outgen.c -o hcl2c
 
 hcl2v: hcl.tab.c lex.yy.c node.c outgen.c
 	$(CC) $(LCFLAGS) -DVLOG node.c lex.yy.c hcl.tab.c outgen.c -o hcl2v
