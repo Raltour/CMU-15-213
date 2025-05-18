@@ -4,12 +4,7 @@
 	halt			# Terminate program 
 
 
-# 定义栈空间
-.pos 0x100
-stack:                  # 栈从这里开始
-    .quad 0             # 初始栈空间
-
-
+# Sample linked list
     .align 8
 ele1:
     .quad 0x00a
@@ -18,7 +13,8 @@ ele2:
     .quad 0x0b0
     .quad ele3
 ele3:
-    .quad 0x
+    .quad 0xc00
+    .quad 0
 
 
 main:	irmovq ele1, %rdi
@@ -30,14 +26,18 @@ main:	irmovq ele1, %rdi
 #li in %rdi
 sum_list:
     xorq %rax, %rax
-    jmp condition
+    jmp test
+
 loop:
-    rrmovq %rdi, %r9
-    mrmovq (%r9), %r10
-    addq %r10, %rax
-condition:
+    mrmovq 8(%rdi), %r10
+    mrmovq (%rdi), %r9
+    addq %r9, %rax
+    rrmovq %r10, %rdi
+    
+test:
     andq %rdi, %rdi
     jg loop
+    
     ret
 
 
