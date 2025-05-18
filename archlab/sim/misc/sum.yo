@@ -1,0 +1,41 @@
+0x000:                      | .pos 0 
+0x000: 30f40001000000000000 | 	irmovq stack, %rsp  	# Set up stack pointer  
+0x00a: 803001000000000000   | 	call main		# Execute main program
+0x013: 00                   | 	halt			# Terminate program 
+                            | 
+                            | 
+                            | # 定义栈空间
+0x100:                      | .pos 0x100
+0x100:                      | stack:                  # 栈从这里开始
+0x100: 0000000000000000     |     .quad 0             # 初始栈空间
+                            | 
+                            | 
+0x108:                      |     .align 8
+0x108:                      | ele1:
+0x108: 0a00000000000000     |     .quad 0x00a
+0x110: 1801000000000000     |     .quad ele2
+0x118:                      | ele2:
+0x118: b000000000000000     |     .quad 0x0b0
+0x120: 2801000000000000     |     .quad ele3
+0x128:                      | ele3:
+0x128: 0000000000000000     |     .quad 0x
+                            | 
+                            | 
+0x130: 30f70801000000000000 | main:	irmovq ele1, %rdi
+0x13a: 804401000000000000   | 	call sum_list
+0x143: 90                   |     ret 
+                            | 
+                            | 
+                            | #long sum_list(list_ptr ls)
+                            | #li in %rdi
+0x144:                      | sum_list:
+0x144: 6300                 |     xorq %rax, %rax
+0x146: 705d01000000000000   |     jmp condition
+0x14f:                      | loop:
+0x14f: 2079                 |     rrmovq %rdi, %r9
+0x151: 50a90000000000000000 |     mrmovq (%r9), %r10
+0x15b: 60a0                 |     addq %r10, %rax
+0x15d:                      | condition:
+0x15d: 6277                 |     andq %rdi, %rdi
+0x15f: 764f01000000000000   |     jg loop
+0x168: 90                   |     ret
