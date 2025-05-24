@@ -32,6 +32,10 @@ ncopy:
 	xorq %rax,%rax		# count = 0;
 	irmovq $1, %r9
 	irmovq $8, %r11
+	irmovq $2, %r12
+	rrmovq %rdx, %rcx		
+	subq %r9, %rcx			#limit = len - 1
+	andq %r9, %rdx		#len %= 2
 	jmp Condition
 
 Loop:	
@@ -41,17 +45,37 @@ Loop:
 	addq %r11, %rsi		# dst++	
 
 	rmmovq %r10, -8(%rsi)	# ...and store it to dst
+
+	andq %r10, %r10		# val <= 0?
+	jle Next		# if so, goto Npos:
+	addq %r9, %rax		# count++
+
+Next:
+	mrmovq (%rdi), %r10	# read val from src...
+	
+	addq %r11, %rdi		# src++
+	addq %r11, %rsi		# dst++	
+
+	rmmovq %r10, -8(%rsi)	# ...and store it to dst
+
 	andq %r10, %r10		# val <= 0?
 	jle Npos		# if so, goto Npos:
 	addq %r9, %rax		# count++
 
 Npos:	
-	subq %r9, %rdx		# len--
-
+	subq %r12, %rcx		# limit -= 2
 
 Condition:
-	andq %rdx, %rdx		# len > 0?
+	andq %rcx, %rcx		# limit > 0?
 	jg Loop:			# if so, goto Loop:
+	andq %rdx, %rdx
+	jle Done
+	mrmovq (%rdi), %r10	# read val from src...
+	rmmovq %r10, (%rsi)	# ...and store it to dst
+	andq %r10, %r10		# val <= 0?
+	jle Done		# if so, goto Npos:
+	addq %r9, %rax		# count++
+
 
 ##################################################################
 # Do not modify the following section of code
