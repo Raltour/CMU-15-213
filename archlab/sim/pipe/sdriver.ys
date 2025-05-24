@@ -30,22 +30,25 @@ ncopy:
 # You can modify this portion
 	# Loop header
 	xorq %rax,%rax		# count = 0;
+	irmovq $1, %r9
+	irmovq $8, %r11
 	andq %rdx,%rdx		# len <= 0?
 	jle Done		# if so, goto Done:
 
-Loop:	mrmovq (%rdi), %r10	# read val from src...
+Loop:	
+	mrmovq (%rdi), %r10	# read val from src...
 	rmmovq %r10, (%rsi)	# ...and store it to dst
 	andq %r10, %r10		# val <= 0?
 	jle Npos		# if so, goto Npos:
-	irmovq $1, %r10
-	addq %r10, %rax		# count++
-Npos:	irmovq $1, %r10
-	subq %r10, %rdx		# len--
-	irmovq $8, %r10
-	addq %r10, %rdi		# src++
-	addq %r10, %rsi		# dst++
+	addq %r9, %rax		# count++
+
+Npos:	
+	subq %r9, %rdx		# len--
+	addq %r11, %rdi		# src++
+	addq %r11, %rsi		# dst++
 	andq %rdx,%rdx		# len > 0?
 	jg Loop			# if so, goto Loop:
+
 ##################################################################
 # Do not modify the following section of code
 # Function epilogue.
@@ -63,9 +66,9 @@ EndFun:
 	.align 8
 src:
 	.quad 1
-	.quad 2
+	.quad -2
 	.quad -3
-	.quad -4
+	.quad 4
 	.quad 0xbcdefa # This shouldn't get moved
 
 	.align 16
