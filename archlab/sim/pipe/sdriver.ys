@@ -40,7 +40,7 @@ Loop:
 	addq %r11, %rdi		# src++
 	addq %r11, %rsi		# dst++	
 
-	rmmovq %r10, (%rsi)	# ...and store it to dst
+	rmmovq %r10, -8(%rsi)	# ...and store it to dst
 	andq %r10, %r10		# val <= 0?
 	jle Npos		# if so, goto Npos:
 	addq %r9, %rax		# count++

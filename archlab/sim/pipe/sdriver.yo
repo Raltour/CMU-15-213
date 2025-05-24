@@ -40,7 +40,7 @@
 0x05b: 60b7                 | 	addq %r11, %rdi		# src++
 0x05d: 60b6                 | 	addq %r11, %rsi		# dst++	
                             | 
-0x05f: 40a60000000000000000 | 	rmmovq %r10, (%rsi)	# ...and store it to dst
+0x05f: 40a6f8ffffffffffffff | 	rmmovq %r10, -8(%rsi)	# ...and store it to dst
 0x069: 62aa                 | 	andq %r10, %r10		# val <= 0?
 0x06b: 717600000000000000   | 	jle Npos		# if so, goto Npos:
 0x074: 6090                 | 	addq %r9, %rax		# count++
