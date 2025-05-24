@@ -19,11 +19,14 @@ ncopy:
 	xorq %rax,%rax		# count = 0;
 	irmovq $1, %r9
 	irmovq $8, %r11
-	andq %rdx,%rdx		# len <= 0?
-	jle Done		# if so, goto Done:
+	jmp Condition
 
 Loop:	
 	mrmovq (%rdi), %r10	# read val from src...
+	
+	addq %r11, %rdi		# src++
+	addq %r11, %rsi		# dst++	
+
 	rmmovq %r10, (%rsi)	# ...and store it to dst
 	andq %r10, %r10		# val <= 0?
 	jle Npos		# if so, goto Npos:
@@ -31,10 +34,11 @@ Loop:
 
 Npos:	
 	subq %r9, %rdx		# len--
-	addq %r11, %rdi		# src++
-	addq %r11, %rsi		# dst++
-	andq %rdx,%rdx		# len > 0?
-	jg Loop			# if so, goto Loop:
+
+
+Condition:
+	andq %rdx, %rdx		# len > 0?
+	jg Loop:			# if so, goto Loop:
 
 ##################################################################
 # Do not modify the following section of code

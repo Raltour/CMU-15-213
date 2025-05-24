@@ -32,42 +32,46 @@
 0x032: 6300                 | 	xorq %rax,%rax		# count = 0;
 0x034: 30f90100000000000000 | 	irmovq $1, %r9
 0x03e: 30fb0800000000000000 | 	irmovq $8, %r11
-0x048: 6222                 | 	andq %rdx,%rdx		# len <= 0?
-0x04a: 718500000000000000   | 	jle Done		# if so, goto Done:
+0x048: 707800000000000000   | 	jmp Condition
                             | 
-0x053:                      | Loop:	
-0x053: 50a70000000000000000 | 	mrmovq (%rdi), %r10	# read val from src...
-0x05d: 40a60000000000000000 | 	rmmovq %r10, (%rsi)	# ...and store it to dst
-0x067: 62aa                 | 	andq %r10, %r10		# val <= 0?
-0x069: 717400000000000000   | 	jle Npos		# if so, goto Npos:
-0x072: 6090                 | 	addq %r9, %rax		# count++
+0x051:                      | Loop:	
+0x051: 50a70000000000000000 | 	mrmovq (%rdi), %r10	# read val from src...
+                            | 	
+0x05b: 60b7                 | 	addq %r11, %rdi		# src++
+0x05d: 60b6                 | 	addq %r11, %rsi		# dst++	
                             | 
-0x074:                      | Npos:	
-0x074: 6192                 | 	subq %r9, %rdx		# len--
-0x076: 60b7                 | 	addq %r11, %rdi		# src++
-0x078: 60b6                 | 	addq %r11, %rsi		# dst++
-0x07a: 6222                 | 	andq %rdx,%rdx		# len > 0?
-0x07c: 765300000000000000   | 	jg Loop			# if so, goto Loop:
+0x05f: 40a60000000000000000 | 	rmmovq %r10, (%rsi)	# ...and store it to dst
+0x069: 62aa                 | 	andq %r10, %r10		# val <= 0?
+0x06b: 717600000000000000   | 	jle Npos		# if so, goto Npos:
+0x074: 6090                 | 	addq %r9, %rax		# count++
+                            | 
+0x076:                      | Npos:	
+0x076: 6192                 | 	subq %r9, %rdx		# len--
+                            | 
+                            | 
+0x078:                      | Condition:
+0x078: 6222                 | 	andq %rdx, %rdx		# len > 0?
+0x07a: 765100000000000000   | 	jg Loop:			# if so, goto Loop:
                             | 
                             | ##################################################################
                             | # Do not modify the following section of code
                             | # Function epilogue.
-0x085:                      | Done:
-0x085: 90                   | 	ret
+0x083:                      | Done:
+0x083: 90                   | 	ret
                             | ##################################################################
                             | # Keep the following label at the end of your function
-0x086:                      | End:
+0x084:                      | End:
                             | #/* $end ncopy-ys */
-0x086:                      | EndFun:
+0x084:                      | EndFun:
                             | 
                             | ###############################
                             | # Source and destination blocks 
                             | ###############################
 0x088:                      | 	.align 8
 0x088:                      | src:
-0x088: 0100000000000000     | 	.quad 1
+0x088: ffffffffffffffff     | 	.quad -1
 0x090: feffffffffffffff     | 	.quad -2
-0x098: fdffffffffffffff     | 	.quad -3
+0x098: 0300000000000000     | 	.quad 3
 0x0a0: 0400000000000000     | 	.quad 4
 0x0a8: fadebc0000000000     | 	.quad 0xbcdefa # This shouldn't get moved
                             | 
