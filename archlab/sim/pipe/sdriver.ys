@@ -31,10 +31,6 @@ ncopy:
 	# Loop header
 	xorq %rax, %rax
 
-	irmovq $1, %r12
-	irmovq $4, %r13
-	irmovq $32, %r14
-	irmovq $8, %rcx
 	jmp Condition1
 
 Write:
@@ -47,47 +43,47 @@ Write1:
 	andq %r8, %r8
 	rmmovq %r8, (%rsi)
 	jle Write2
-	addq %r12, %rax	
+	iaddq $1, %rax	
 
 Write2:
 	andq %r9, %r9
 	rmmovq %r9, 8(%rsi)
 	jle Write3
-	addq %r12, %rax	
+	iaddq $1, %rax	
 
 Write3:
 	andq %r10, %r10
 	rmmovq %r10, 16(%rsi)
 	jle Write4
-	addq %r12, %rax	
+	iaddq $1, %rax	
 
 Write4:
 	andq %r11, %r11
 	rmmovq %r11, 24(%rsi)
 	jle Next
-	addq %r12, %rax	
+	iaddq $1, %rax	
 	
 Next:
-	addq %r14, %rdi
-	addq %r14, %rsi
+	iaddq $32, %rdi
+	iaddq $32, %rsi
 
 Condition1:
-	subq %r13, %rdx
+	iaddq $-4, %rdx
 	jge Write
-	addq %r13, %rdx
+	iaddq $4, %rdx
 	jmp Condition2
 
 Loop:
 	mrmovq (%rdi), %r8
-	addq %rcx, %rdi
+	iaddq $8, %rdi
 	rmmovq %r8, (%rsi)
-	addq %rcx, %rsi
+	iaddq $8, %rsi
 	andq %r8, %r8
 	jle Condition2
-	addq %r12, %rax
+	iaddq $1, %rax
 
 Condition2:
-	subq %r12, %rdx
+	iaddq $-1, %rdx
 	jge Loop			# if so, goto Loop:
 
 
