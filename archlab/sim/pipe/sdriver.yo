@@ -109,8 +109,8 @@
 0x138:                      | 	.align 8
 0x138:                      | src:
 0x138: 0100000000000000     | 	.quad 1
-0x140: 0200000000000000     | 	.quad 2
-0x148: fdffffffffffffff     | 	.quad -3
+0x140: feffffffffffffff     | 	.quad -2
+0x148: 0300000000000000     | 	.quad 3
 0x150: fcffffffffffffff     | 	.quad -4
 0x158: fadebc0000000000     | 	.quad 0xbcdefa # This shouldn't get moved
                             | 
