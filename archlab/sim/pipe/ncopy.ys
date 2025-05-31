@@ -31,26 +31,26 @@ Write:
 	mrmovq 24(%rdi), %r11
 
 Write1:
-	rmmovq %r8, (%rsi)
 	andq %r8, %r8
+	rmmovq %r8, (%rsi)
 	jle Write2
 	addq %r12, %rax	
 
 Write2:
-	rmmovq %r9, 8(%rsi)
 	andq %r9, %r9
+	rmmovq %r9, 8(%rsi)
 	jle Write3
 	addq %r12, %rax	
 
 Write3:
-	rmmovq %r10, 16(%rsi)
 	andq %r10, %r10
+	rmmovq %r10, 16(%rsi)
 	jle Write4
 	addq %r12, %rax	
 
 Write4:
-	rmmovq %r11, 24(%rsi)
 	andq %r11, %r11
+	rmmovq %r11, 24(%rsi)
 	jle Next
 	addq %r12, %rax	
 	
@@ -60,8 +60,7 @@ Next:
 
 Condition1:
 	subq %r13, %rdx
-	andq %rdx, %rdx		# limit >= 0?
-	jge Write			# if so, goto Loop:
+	jge Write
 	addq %r13, %rdx
 	jmp Condition2
 
@@ -76,7 +75,6 @@ Loop:
 
 Condition2:
 	subq %r12, %rdx
-	andq %rdx, %rdx		# limit >= 0?
 	jge Loop			# if so, goto Loop:
 
 
