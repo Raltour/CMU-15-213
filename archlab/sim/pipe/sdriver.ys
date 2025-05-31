@@ -29,83 +29,70 @@ ncopy:
 ##################################################################
 # You can modify this portion
 	# Loop header
-	xorq %rax,%rax		# count = 0;
-	irmovq $1, %r9
-	irmovq $8, %r11
-	irmovq $4, %r12
-	irmovq $3, %r13
-	rrmovq %rdx, %rcx
-	subq %r13, %rcx			#limit = len - 3
-	andq %r13, %rdx		#len %= 4
-	jmp Condition
+	xorq %rax, %rax
 
-Loop1:	
-	mrmovq (%rdi), %r10	# read val from src...
-	addq %r11, %rdi		# src++
-	rmmovq %r10, (%rsi)	# ...and store it to dst
-	addq %r11, %rsi		# dst++	
+	irmovq $1, %r12
+	irmovq $4, %r13
+	irmovq $32, %r14
+	irmovq $8, %rcx
+	jmp Condition1
 
-	andq %r10, %r10		# val <= 0?
-	jle Next1		# if so, goto Npos:
-	addq %r9, %rax		# count++
+Write:
+	mrmovq (%rdi), %r8
+	mrmovq 8(%rdi), %r9	
+	mrmovq 16(%rdi), %r10
+	mrmovq 24(%rdi), %r11
 
-Next1:
-	mrmovq (%rdi), %r10	# read val from src...
-	addq %r11, %rdi		# src++
-	rmmovq %r10, (%rsi)	# ...and store it to dst
-	addq %r11, %rsi		# dst++	
+Write1:
+	rmmovq %r8, (%rsi)
+	andq %r8, %r8
+	jle Write2
+	addq %r12, %rax	
 
-	andq %r10, %r10		# val <= 0?
-	jle Next2		# if so, goto Npos:
-	addq %r9, %rax		# count++
+Write2:
+	rmmovq %r9, 8(%rsi)
+	andq %r9, %r9
+	jle Write3
+	addq %r12, %rax	
 
-Next2:
-	mrmovq (%rdi), %r10	# read val from src...
-	addq %r11, %rdi		# src++
-	rmmovq %r10, (%rsi)	# ...and store it to dst
-	addq %r11, %rsi		# dst++	
+Write3:
+	rmmovq %r10, 16(%rsi)
+	andq %r10, %r10
+	jle Write4
+	addq %r12, %rax	
 
-	andq %r10, %r10		# val <= 0?
-	jle Next3		# if so, goto Npos:
-	addq %r9, %rax		# count++
+Write4:
+	rmmovq %r11, 24(%rsi)
+	andq %r11, %r11
+	jle Next
+	addq %r12, %rax	
+	
+Next:
+	addq %r14, %rdi
+	addq %r14, %rsi
 
-Next3:
-	mrmovq (%rdi), %r10	# read val from src...
-	addq %r11, %rdi		# src++
-	rmmovq %r10, (%rsi)	# ...and store it to dst
-	addq %r11, %rsi		# dst++	
-
-	andq %r10, %r10		# val <= 0?
-	jle Npos		# if so, goto Npos:
-	addq %r9, %rax		# count++
-
-Npos:	
-	subq %r12, %rcx		# limit -= 4
-
-Condition:
-	andq %rcx, %rcx		# limit > 0?
-	jg Loop1:			# if so, goto Loop1:
+Condition1:
+	subq %r13, %rdx
+	andq %rdx, %rdx		# limit >= 0?
+	jge Write			# if so, goto Loop:
+	addq %r13, %rdx
 	jmp Condition2
 
-
-Loop2:	
-	mrmovq (%rdi), %r10	# read val from src...
-	
-	addq %r11, %rdi		# src++
-	addq %r11, %rsi		# dst++	
-
-	rmmovq %r10, -8(%rsi)	# ...and store it to dst
-
-	andq %r10, %r10		# val <= 0?
-	jle Npos2		# if so, goto Npos:
-	addq %r9, %rax		# count++
-
-Npos2:	
-	subq %r9, %rdx		# len--
+Loop:
+	mrmovq (%rdi), %r8
+	addq %rcx, %rdi
+	rmmovq %r8, (%rsi)
+	addq %rcx, %rsi
+	andq %r8, %r8
+	jle Condition2
+	addq %r12, %rax
 
 Condition2:
-	andq %rdx, %rdx		# len > 0?
-	jg Loop2:			# if so, goto Loop:
+	subq %r12, %rdx
+	andq %rdx, %rdx		# limit >= 0?
+	jge Loop			# if so, goto Loop:
+
+
 
 ##################################################################
 # Do not modify the following section of code
@@ -123,10 +110,10 @@ EndFun:
 ###############################
 	.align 8
 src:
-	.quad -1
-	.quad -2
-	.quad 3
-	.quad 4
+	.quad 1
+	.quad 2
+	.quad -3
+	.quad -4
 	.quad 0xbcdefa # This shouldn't get moved
 
 	.align 16
