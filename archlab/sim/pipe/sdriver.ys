@@ -30,7 +30,6 @@ ncopy:
 # You can modify this portion
 	# Loop header
 	xorq %rax, %rax
-
 	jmp Condition1
 
 Write:
@@ -38,6 +37,10 @@ Write:
 	mrmovq 8(%rdi), %r9	
 	mrmovq 16(%rdi), %r10
 	mrmovq 24(%rdi), %r11
+	mrmovq 32(%rdi), %r12
+	mrmovq 40(%rdi), %r13
+	mrmovq 48(%rdi), %r14
+	mrmovq 56(%rdi), %rcx
 
 Write1:
 	andq %r8, %r8
@@ -60,17 +63,41 @@ Write3:
 Write4:
 	andq %r11, %r11
 	rmmovq %r11, 24(%rsi)
+	jle Write5
+	iaddq $1, %rax	
+
+Write5:
+	andq %r12, %r12
+	rmmovq %r12, 32(%rsi)
+	jle Write6
+	iaddq $1, %rax
+	
+Write6:
+	andq %r13, %r13
+	rmmovq %r13, 40(%rsi)
+	jle Write7
+	iaddq $1, %rax	
+
+Write7:
+	andq %r14, %r14
+	rmmovq %r14, 48(%rsi)
+	jle Write8
+	iaddq $1, %rax	
+	
+Write8:
+	andq %rcx, %rcx
+	rmmovq %rcx, 56(%rsi)
 	jle Next
 	iaddq $1, %rax	
 	
 Next:
-	iaddq $32, %rdi
-	iaddq $32, %rsi
+	iaddq $64, %rdi
+	iaddq $64, %rsi
 
 Condition1:
-	iaddq $-4, %rdx
+	iaddq $-8, %rdx
 	jge Write
-	iaddq $4, %rdx
+	iaddq $8, %rdx
 	jmp Condition2
 
 Loop:
@@ -104,8 +131,8 @@ EndFun:
 ###############################
 	.align 8
 src:
-	.quad 1
-	.quad -2
+	.quad -1
+	.quad 2
 	.quad 3
 	.quad -4
 	.quad 0xbcdefa # This shouldn't get moved
