@@ -73,7 +73,7 @@ Next:
 
 Condition1:
 	subq %r13, %rdx
-	jge Write			# if so, goto Loop:
+	jge Write
 	addq %r13, %rdx
 	jmp Condition2
 

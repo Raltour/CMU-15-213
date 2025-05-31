@@ -121,7 +121,7 @@ bool need_valC =
 
 ## What register should be used as the A source?
 word srcA = [
-	icode in { IRRMOVQ, IRMMOVQ, IOPQ, IPUSHQ  } : rA;
+	icode in { IRRMOVQ, IRMMOVQ, IOPQ, IPUSHQ, IIADDQ} : rA;
 	icode in { IPOPQ, IRET } : RRSP;
 	1 : RNONE; # Don't need register
 ];

@@ -73,7 +73,7 @@
                             | 
 0x0ed:                      | Condition1:
 0x0ed: 61d2                 | 	subq %r13, %rdx
-0x0ef: 756500000000000000   | 	jge Write			# if so, goto Loop:
+0x0ef: 756500000000000000   | 	jge Write
 0x0f8: 60d2                 | 	addq %r13, %rdx
 0x0fa: 702801000000000000   | 	jmp Condition2
                             | 

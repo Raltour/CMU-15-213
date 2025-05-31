@@ -73,7 +73,7 @@
                             | 
 0x0ed:                      | Condition1:
 0x0ed: 61d2                 | 	subq %r13, %rdx
-0x0ef: 756500000000000000   | 	jge Write			# if so, goto Loop:
+0x0ef: 756500000000000000   | 	jge Write
 0x0f8: 60d2                 | 	addq %r13, %rdx
 0x0fa: 702801000000000000   | 	jmp Condition2
                             | 
@@ -108,64 +108,64 @@
                             | ###############################
 0x138:                      | 	.align 8
 0x138:                      | src:
-0x138: 0100000000000000     | 	.quad 1
+0x138: ffffffffffffffff     | 	.quad -1
 0x140: 0200000000000000     | 	.quad 2
-0x148: 0300000000000000     | 	.quad 3
-0x150: fcffffffffffffff     | 	.quad -4
+0x148: fdffffffffffffff     | 	.quad -3
+0x150: 0400000000000000     | 	.quad 4
 0x158: 0500000000000000     | 	.quad 5
-0x160: faffffffffffffff     | 	.quad -6
+0x160: 0600000000000000     | 	.quad 6
 0x168: 0700000000000000     | 	.quad 7
-0x170: 0800000000000000     | 	.quad 8
-0x178: 0900000000000000     | 	.quad 9
+0x170: f8ffffffffffffff     | 	.quad -8
+0x178: f7ffffffffffffff     | 	.quad -9
 0x180: 0a00000000000000     | 	.quad 10
 0x188: f5ffffffffffffff     | 	.quad -11
-0x190: f4ffffffffffffff     | 	.quad -12
-0x198: 0d00000000000000     | 	.quad 13
+0x190: 0c00000000000000     | 	.quad 12
+0x198: f3ffffffffffffff     | 	.quad -13
 0x1a0: 0e00000000000000     | 	.quad 14
 0x1a8: 0f00000000000000     | 	.quad 15
 0x1b0: 1000000000000000     | 	.quad 16
-0x1b8: efffffffffffffff     | 	.quad -17
-0x1c0: 1200000000000000     | 	.quad 18
-0x1c8: edffffffffffffff     | 	.quad -19
+0x1b8: 1100000000000000     | 	.quad 17
+0x1c0: eeffffffffffffff     | 	.quad -18
+0x1c8: 1300000000000000     | 	.quad 19
 0x1d0: 1400000000000000     | 	.quad 20
 0x1d8: ebffffffffffffff     | 	.quad -21
 0x1e0: 1600000000000000     | 	.quad 22
-0x1e8: e9ffffffffffffff     | 	.quad -23
-0x1f0: e8ffffffffffffff     | 	.quad -24
-0x1f8: e7ffffffffffffff     | 	.quad -25
-0x200: 1a00000000000000     | 	.quad 26
-0x208: 1b00000000000000     | 	.quad 27
+0x1e8: 1700000000000000     | 	.quad 23
+0x1f0: 1800000000000000     | 	.quad 24
+0x1f8: 1900000000000000     | 	.quad 25
+0x200: e6ffffffffffffff     | 	.quad -26
+0x208: e5ffffffffffffff     | 	.quad -27
 0x210: 1c00000000000000     | 	.quad 28
-0x218: 1d00000000000000     | 	.quad 29
+0x218: e3ffffffffffffff     | 	.quad -29
 0x220: 1e00000000000000     | 	.quad 30
-0x228: 1f00000000000000     | 	.quad 31
-0x230: e0ffffffffffffff     | 	.quad -32
-0x238: dfffffffffffffff     | 	.quad -33
-0x240: 2200000000000000     | 	.quad 34
-0x248: 2300000000000000     | 	.quad 35
+0x228: e1ffffffffffffff     | 	.quad -31
+0x230: 2000000000000000     | 	.quad 32
+0x238: 2100000000000000     | 	.quad 33
+0x240: deffffffffffffff     | 	.quad -34
+0x248: ddffffffffffffff     | 	.quad -35
 0x250: dcffffffffffffff     | 	.quad -36
-0x258: 2500000000000000     | 	.quad 37
+0x258: dbffffffffffffff     | 	.quad -37
 0x260: daffffffffffffff     | 	.quad -38
 0x268: 2700000000000000     | 	.quad 39
 0x270: d8ffffffffffffff     | 	.quad -40
-0x278: 2900000000000000     | 	.quad 41
+0x278: d7ffffffffffffff     | 	.quad -41
 0x280: 2a00000000000000     | 	.quad 42
 0x288: 2b00000000000000     | 	.quad 43
-0x290: 2c00000000000000     | 	.quad 44
+0x290: d4ffffffffffffff     | 	.quad -44
 0x298: 2d00000000000000     | 	.quad 45
 0x2a0: 2e00000000000000     | 	.quad 46
 0x2a8: d1ffffffffffffff     | 	.quad -47
 0x2b0: d0ffffffffffffff     | 	.quad -48
 0x2b8: cfffffffffffffff     | 	.quad -49
-0x2c0: ceffffffffffffff     | 	.quad -50
-0x2c8: cdffffffffffffff     | 	.quad -51
-0x2d0: ccffffffffffffff     | 	.quad -52
-0x2d8: cbffffffffffffff     | 	.quad -53
+0x2c0: 3200000000000000     | 	.quad 50
+0x2c8: 3300000000000000     | 	.quad 51
+0x2d0: 3400000000000000     | 	.quad 52
+0x2d8: 3500000000000000     | 	.quad 53
 0x2e0: caffffffffffffff     | 	.quad -54
 0x2e8: c9ffffffffffffff     | 	.quad -55
 0x2f0: c8ffffffffffffff     | 	.quad -56
 0x2f8: c7ffffffffffffff     | 	.quad -57
-0x300: c6ffffffffffffff     | 	.quad -58
+0x300: 3a00000000000000     | 	.quad 58
 0x308: c5ffffffffffffff     | 	.quad -59
 0x310: c4ffffffffffffff     | 	.quad -60
 0x318: c3ffffffffffffff     | 	.quad -61
