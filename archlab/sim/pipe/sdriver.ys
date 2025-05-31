@@ -97,22 +97,95 @@ Next:
 Condition1:
 	iaddq $-8, %rdx
 	jge Write
-	iaddq $8, %rdx
-	jmp Condition2
 
-Loop:
+Condition2:				# -8 ~~ -1
+	iaddq $4, %rdx		# -4 ~~ 3
 	mrmovq (%rdi), %r8
-	iaddq $8, %rdi
-	rmmovq %r8, (%rsi)
-	iaddq $8, %rsi
-	andq %r8, %r8
-	jle Condition2
+	jge handle_4_to_7
+	jmp handle_0_to_3
+
+handle_4_to_7:			#  0 ~~ 3
+	iaddq $-2, %rdx
+	mrmovq 8(%rdi), %r9
+	mrmovq 16(%rdi), %r10
+	mrmovq 24(%rdi), %r11
+	jge handle_6_to_7
+	jmp handle_4_to_5
+
+handle_0_to_3:			#  -4 ~~ -1
+	iaddq $2, %rdx
+	mrmovq 8(%rdi), %r9
+	jge handle_2_to_3
+	jmp handle_0_to_1
+
+handle_6_to_7:			#  0 ~~ 1
+	andq %rdx, %rdx	
+	mrmovq 32(%rdi), %r12
+	mrmovq 40(%rdi), %r13
+	je handle_6
+	mrmovq 48(%rdi), %r14
+	jmp handle_7
+
+handle_4_to_5:			#  -2 ~~ -1
+	iaddq $2, %rdx
+	mrmovq 32(%rdi), %r12
+	je handle_4
+	jmp handle_5
+
+handle_2_to_3:			#  0 ~~ 1
+	andq %rdx, %rdx
+	mrmovq 16(%rdi), %r10
+	je handle_2
+	jmp handle_3
+
+handle_0_to_1:			#  -2 ~~ -1
+	iaddq $2, %rdx
+	je handle_0
+	jmp handle_1
+
+handle_7:
+	andq %r14, %r14
+	rmmovq %r14, 48(%rsi)
+	jle handle_6
 	iaddq $1, %rax
 
-Condition2:
-	iaddq $-1, %rdx
-	jge Loop			# if so, goto Loop:
+handle_6:
+	andq %r13, %r13
+	rmmovq %r13, 40(%rsi)
+	jle handle_5
+	iaddq $1, %rax
 
+handle_5:
+	andq %r12, %r12
+	rmmovq %r12, 32(%rsi)
+	jle handle_4
+	iaddq $1, %rax
+
+handle_4:
+	andq %r11, %r11
+	rmmovq %r11, 24(%rsi)
+	jle handle_3
+	iaddq $1, %rax
+
+handle_3:
+	andq %r10, %r10
+	rmmovq %r10, 16(%rsi)
+	jle handle_2
+	iaddq $1, %rax
+
+handle_2:
+	andq %r9, %r9
+	rmmovq %r9, 8(%rsi)
+	jle handle_1
+	iaddq $1, %rax
+
+handle_1:
+	andq %r8, %r8
+	rmmovq %r8, (%rsi)
+	jle handle_0
+	iaddq $1, %rax
+
+handle_0:
 
 
 ##################################################################
@@ -131,9 +204,9 @@ EndFun:
 ###############################
 	.align 8
 src:
-	.quad -1
+	.quad 1
 	.quad 2
-	.quad 3
+	.quad -3
 	.quad -4
 	.quad 0xbcdefa # This shouldn't get moved
 
